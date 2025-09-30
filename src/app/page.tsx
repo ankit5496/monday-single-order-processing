@@ -6,6 +6,12 @@ import { CheckCircle ,Loader2  } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Select from "react-select";
+import mondaySdk from "monday-sdk-js";
+
+// type MondayContext = {
+//   itemId?: number;
+//   boardId?: number;
+// };
 
 type Order = {
   id: string;
@@ -44,7 +50,9 @@ type LineItem = {
   quantity: string;
   unitPrice: string;
   status: string;
+  courierName?:string;
   supplierId?: string;
+  supplierName?:string;
   courierId?: string;
   suppliers: Supplier[];
   availableCouriers?: Courier[];
@@ -73,12 +81,16 @@ type GroupedManifests = {
 };
 
 export default function OrderDetail() {
+  const monday = mondaySdk();
   const [order, setOrder] = useState<Order | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [customer_info, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
+  const [itemId, setItemId] = useState<number | null>(null);
+  
+
 
   const totalQuantity: number = lineItems.reduce(
     (sum, item) => sum + Number(item.quantity),
@@ -180,58 +192,66 @@ const handleGenerateManifestAndLabel = async () => {
     const manifests = groupLineItemsForManifest(lineItems);
 
     for (const manifest of manifests) {
+      const normalizedSupplierId = Array.isArray(manifest.supplierId)
+        ? manifest.supplierId[0]
+        : manifest.supplierId;
 
-        const supplier = manifest.items[0]?.suppliers.find(
-          (s) => s.supplier_id === manifest.supplierId
-        );
-        console.log('supplier8787---->',supplier);
+      const supplier = manifest.items[0]?.suppliers.find(
+        (s) => String(s.supplier_id) === String(normalizedSupplierId)
+      );
+      console.log("supplier8787---->", supplier);
 
-        const courier = manifest.items[0]?.availableCouriers?.find(
-          (c) => c.courier_id === manifest.courierId
-        );
-      
-        const manifestPayload = {
-          supplierId: manifest.supplierId,
-          supplierName: supplier?.supplier_name || "",
-          supplierAddress: supplier?.supplier_address || "", 
-          supplierPhone: supplier?.supplier_phone || "", 
-          courierId: manifest.courierId,
-          courierName: courier?.courier_name || "",
-          customer: customer_info,
-          lineitems: manifest.items,
-        };
+      const courier = manifest.items[0]?.availableCouriers?.find(
+        (c) => String(c.courier_id) === String(manifest.courierId)
+      );
+      console.log("courier8787---->", courier);
 
-        console.log('manifestPayload---->',manifestPayload);
-        
-        // Generate manifest PDF
-        await axios.post("http://127.0.0.1:8000/generate-manifest", manifestPayload, {
-          responseType: "blob",
-        });
-        
-        // --- Labels for this manifest group ---
-        const labelPayload = {
-          supplierId: manifest.supplierId,
-          supplierName: supplier?.supplier_name || "",
-          supplierAddress: supplier?.supplier_address || "",
-          supplierPhone: supplier?.supplier_phone || "",
-          courierId: manifest.courierId,
-          courierName: courier?.courier_name || "",
-          customer: customer_info,
-          lineitems:manifest.items,
-        };
-        console.log('labelPayload---->',labelPayload);
-        
-        await axios.post("http://127.0.0.1:8000/generate-label", labelPayload, {
-          responseType: "blob",
-        });
+      // Manifest payload
+      const manifestPayload = {
+        supplierId: normalizedSupplierId,
+        supplierName: supplier?.supplier_name || "",
+        supplierAddress: supplier?.supplier_address || "",
+        supplierPhone: supplier?.supplier_phone || "",
+        courierId: manifest.courierId,
+        courierName: courier?.courier_name || "",
+        customer: customer_info,
+        lineitems: manifest.items,
+      };
+
+      console.log("manifestPayload---->", manifestPayload);
+
+      // Generate manifest PDF
+      await axios.post("http://127.0.0.1:8000/generate-manifest", manifestPayload, {
+        responseType: "blob",
+      });
+
+      // Label payload
+      const labelPayload = {
+        supplierId: normalizedSupplierId,
+        supplierName: supplier?.supplier_name || "",
+        supplierAddress: supplier?.supplier_address || "",
+        supplierPhone: supplier?.supplier_phone || "",
+        courierId: manifest.courierId,
+        courierName: courier?.courier_name || "",
+        customer: customer_info,
+        lineitems: manifest.items,
+      };
+
+      console.log("labelPayload---->", labelPayload);
+
+      await axios.post("http://127.0.0.1:8000/generate-label", labelPayload, {
+        responseType: "blob",
+      });
     }
 
-    alert("✅ Manifests and Labels generated successfully");
+    alert("Manifests and Labels generated successfully");
   } catch (error) {
     console.error("Error generating manifest/label:", error);
-    alert("❌ Failed to generate manifest/label");
+    alert("Failed to generate manifest/label");
   }
 };
+
+
 
 const handleClick = async () => {
     try {
@@ -246,7 +266,16 @@ const handleClick = async () => {
   const allGenerated = lineItems.every(item => item.status === "Manifest Generated");
 
   useEffect(() => {
+    // monday.listen("context", (res: { data: Context }) => {
+    //   console.log("Context:", res);
+
+    //   // safely narrow down the type
+    //   if ("itemId" in res.data) {
+    //     setItemId(res.data.itemId as number);
+    //   }
+    // });
     fetchOrderWithLineItems();
+    
   }, []);
 
   return (
@@ -349,50 +378,63 @@ const handleClick = async () => {
                         <td className="px-3">{item.quantity}</td>
                         <td className="px-3">${item.unitPrice}</td>
                         <td className="px-3">
-  <Select
-    // value={item.suppliers.find((s) => s.supplier_id === item.supplierId) || null}
-    value={
-  item.suppliers.find((s) => String(s.supplier_id) === String(item.supplierId)) || null
-}
-    onChange={(option) => handleSupplierChange(item.id, option?.supplier_id || "")}
-    options={item.suppliers}
-    getOptionLabel={(option) => option.supplier_name}
-    getOptionValue={(option) => option.supplier_id}
-    placeholder={
-      item.suppliers.length ? "Select supplier" : "No suppliers available"
-    }
-    isSearchable
-    menuPortalTarget={document.body} 
-    styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-    isDisabled={item.status === "Manifest Generated"}  
-  />
-</td>
+                        {item.status === "Manifest Generated" ? (
+                          <span className="text-gray-700">
+                            {
+                              item.suppliers.find((s) => s.supplier_id === item.supplierId)
+                                ?.supplier_name || item.supplierName || "—"
+                            }
+                          </span>
+                        ) : (
+                          <Select
+                            value={item.suppliers.find((s) => s.supplier_id === item.supplierId) || null}
+                            onChange={(option) =>
+                              handleSupplierChange(item.id, option?.supplier_id || "")
+                            }
+                            options={item.suppliers}
+                            getOptionLabel={(option) => option.supplier_name}
+                            getOptionValue={(option) => option.supplier_id}
+                            placeholder={
+                              item.suppliers.length ? "Select supplier" : "No suppliers available"
+                            }
+                            isSearchable
+                            menuPortalTarget={document.body}
+                            styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                          />
+                        )}
+                      </td>
 
-<td className="px-3">
-  <Select
-    // value={
-    //   item.availableCouriers?.find((c) => c.courier_id === item.courierId) || null
-    // }
-    value={
-  item.availableCouriers?.find((c) => String(c.courier_id) === String(item.courierId)) || null
-}
-    onChange={(option) =>
-      handleCourierChange(item.id, option?.courier_id || "")
-    }
-    options={item.availableCouriers || []}
-    getOptionLabel={(option) => option.courier_name}
-    getOptionValue={(option) => option.courier_id}
-    placeholder={
-      item.availableCouriers?.length
-        ? "Select courier"
-        : "No couriers available"
-    }
-    isSearchable
-    menuPortalTarget={document.body}
-    styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-    isDisabled={item.status === "Manifest Generated"} // 🚫 disable if already generated
-  />
-</td>
+                        <td className="px-3">
+                          {item.status === "Manifest Generated" ? (
+                            <span className="text-gray-700">
+                              {item.courierName || "—"}
+                            </span>
+                          ) : (
+                            <Select
+                              value={
+                                item.availableCouriers?.find(
+                                  (c) =>
+                                    String(c.courier_id) === String(item.courierId) ||
+                                    c.courier_name === item.courierName
+                                ) || null
+                              }
+                              onChange={(option) =>
+                                handleCourierChange(item.id, option?.courier_id || "")
+                              }
+                              options={item.availableCouriers || []}
+                              getOptionLabel={(option) => option.courier_name}
+                              getOptionValue={(option) => option.courier_id}
+                              placeholder={
+                                item.availableCouriers?.length
+                                  ? "Select courier"
+                                  : "No couriers available"
+                              }
+                              isSearchable
+                              menuPortalTarget={document.body}
+                              styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                            />
+                          )}
+                        </td>
                         <td className="px-3">
                           <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
                             {item.status}
@@ -417,19 +459,19 @@ const handleClick = async () => {
           {/* Single Action Button */}
           <div className="flex justify-end">
               <Button
-  className="bg-green-600 hover:bg-green-700 text-white relative"
-  onClick={handleClick}
-  disabled={buttonLoading || allGenerated} // 🚫 disable button if all done
->
-  {buttonLoading ? (
-    <Loader2 className="animate-spin h-5 w-5 absolute inset-0 m-auto" />
-  ) : (
-    <>
-      <CheckCircle className="mr-2 h-4 w-4" />
-      Generate Manifest & Label
-    </>
-  )}
-</Button>
+                className="bg-green-600 hover:bg-green-700 text-white relative"
+                onClick={handleClick}
+                disabled={buttonLoading || allGenerated} 
+              >
+                {buttonLoading ? (
+                  <Loader2 className="animate-spin h-5 w-5 absolute inset-0 m-auto" />
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Generate Manifest & Label
+                  </>
+                )}
+              </Button>
           </div>
         </div>
       )}
