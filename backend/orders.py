@@ -173,7 +173,9 @@ def get_order_with_lineitems(order_id):
             "productWeight": get_value("Product Weight", order_item),
             "customerId": get_value("CustomerId", order_item),
             "supplierId": get_linked_item_ids("Supplier", order_item),
+            "supplierName":get_value("Supplier",order_item),
             "courierId": get_value("courierId", order_item),
+            "courierName":get_value("courier",order_item)
         })    
     
     print('parsed_items-lineitems=--->',parsed_items)
@@ -608,10 +610,13 @@ def update_order_line_item(item_id, status, supplier_id, supplier_name, courier_
     # Build column values as dict
     column_values = {
         "status": {"label": status},
-        "board_relation_mks3arpf": {"item_ids": [str(supplier_id)]},  # relation field
-        "text_mkw4jp1r": str(courier_id),  # text field
-        "text_mkw41y6y": courier_name      # text field
+        "board_relation_mks3arpf": {"item_ids": [str(supplier_id)]}, 
     }
+
+    if courier_id:
+        column_values["text_mkw4jp1r"] = str(courier_id)
+    if courier_name:
+        column_values["text_mkw41y6y"] = courier_name
 
     variables = {
         "itemId": str(item_id),
