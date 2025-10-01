@@ -89,7 +89,21 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [itemId, setItemId] = useState<number | null>(null);
-  
+
+  monday.get("context").then((res) => {
+      const context = res.data;
+
+      // Safely check if boardId exists
+      if ("boardId" in context && "itemId" in context) {
+        const boardId = Number(context.boardId);
+        const itemId = Number(context.itemId);
+
+        console.log("Board ID:", boardId);
+        console.log("Item ID:", itemId);
+      } else {
+        console.warn("Board ID or Item ID not available in this context:", context);
+      }
+    });
 
 
   const totalQuantity: number = lineItems.reduce(
