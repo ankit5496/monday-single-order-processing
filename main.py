@@ -13,11 +13,15 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/order", methods=["GET"])
 def order_details():
-    print('hello world',flush=True)
-    order_id = 2023614909
+    print("request.args:", request.args)
+    order_id = request.args.get("itemId")
+    print('order-id', order_id)
+    if not order_id:
+        return jsonify({"error": "Missing itemId"}), 400
     data = get_order_with_lineitems(order_id)
-    print('data--->',data,flush=True)
+    print('data--->',data)
     return jsonify(data)
+
 
 @app.route("/get-couriers", methods=["POST"])
 def get_couriers():
