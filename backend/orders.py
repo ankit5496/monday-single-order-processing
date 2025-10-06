@@ -30,376 +30,306 @@ MONDAY_API_URL = "https://api.monday.com/v2"
 
 
 def get_order_with_lineitems(order_id):
-    print('enter in this orderlineitems')
-    
-    
-    headers = {
-        "Authorization": MONDAY_API_KEY,
-        "Content-Type": "application/json"
-    }
+    try:
+        print('order_id in lineitem', order_id)
+        orderId = [order_id]
+        print('orderId----->', orderId)
 
-    customer_info = {
+        try:
+            campare_value = [int(x) for x in orderId]
+        except (ValueError, TypeError) as e:
+            print(f"Error converting orderId to int: {e}")
+            return None
+
+        headers = {
+            "Authorization": MONDAY_API_KEY,
+            "Content-Type": "application/json"
+        }
+
+        customer_info = {
             "id": None,
-            "name":"",
+            "name": "",
             "email": "",
-            "phone":"",
-            "address":"",
+            "phone": "",
+            "address": "",
             "postal_code": "",
-
         }
 
-    # 1. Fetch the order details
-    order_query = f"""
-    query {{
-      items (ids: {order_id}) {{
-        id
-        name
-        column_values {{
-        column {{
-        title
-        }}
-        id
-        text
-        value
-        ... on MirrorValue {{
-            display_value
-            text
-            value
-        }}
-        ... on BoardRelationValue {{
-            linked_item_ids
-            display_value            
-        }}
-        ... on FormulaValue {{
-            value
-            id
-            display_value
-            }}
-        }}
-      }}
-    }}
-    """
-
-    order_response = requests.post(MONDAY_API_URL, headers=headers, json={"query": order_query})
-    order_response.raise_for_status()
-    order_data = order_response.json()
-    print("order_response JSON ---->", order_data)
-
-    order_item = order_data["data"]["items"][0]
-    order_data = {
-        "id": order_item["id"],
-        "name": order_item["name"],
-        "status": get_value("Status",order_item),
-        "date": get_value("Date",order_item),
-        "orderId": get_value("OrderId",order_item),
-        "description": get_value("Description",order_item),
-        "totalPrice": get_value("TotalPrice",order_item),
-        "customerPostalCode": get_value("CustomerPostalCode",order_item),
-    }
-    
-    print("order_data-column-value ---->", order_data)
-
-
-    orderId_column_value_id = "board_relation_mks0fnmz"
-    # Fetch related line items where column 'orderId' matches
-    # related_lineitems = get_related_items(ORDER_LINE_ITEMS_BOARD_ID, orderId_column_value_id, 2023614909)
-    # print('related_lineitems--->',related_lineitems)
-
-    orderId_column_value_id = get_column_id(ORDER_LINE_ITEMS_BOARD_ID,"Order")
-    print('orderId_column_value_id',orderId_column_value_id)
-
-    lineitems_query = f"""
+        # 1. Fetch the order details
+        order_query = f"""
         query {{
-        boards(ids: {ORDER_LINE_ITEMS_BOARD_ID}) {{
-            items_page(query_params: {{rules: [ {{ column_id: "{orderId_column_value_id}", compare_value: [2023614909] }}] , operator: or}}) {{
-            cursor
-            items {{
-                id
-                name
-                column_values {{
-                column {{
-                    title
-                }}
-                id
-                text
-                value
-                ... on MirrorValue {{
-                    display_value
-                    text
-                    value
-                }}
-                ... on BoardRelationValue {{
-                    linked_item_ids
-                    display_value            
-                }}
-                ... on FormulaValue {{
-                    value
-                    id
-                    display_value
-                }}
-                }}
-            }}
-            }}
-        }}
-        }}
-    """
-
-    response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
-    response.raise_for_status()
-    response_json = response.json()
-    print(" JSON ---->", response_json)
-
-    boards = response_json["data"]["boards"]
-    for board in boards:
-        items_page = board.get("items_page", {})
-        items = items_page.get("items", [])
-
-
-    parsed_items = []
-    for order_item in items:
-        parsed_items.append({
-            "id": order_item.get("id"),
-            "name": order_item.get("name"),
-            "orderNumber": get_value("OrderNumber", order_item),
-            "product": get_value("Product", order_item),
-            "product_id": get_linked_item_ids("Product", order_item),
-            "productCode": get_value("lookup_mks1f46y", order_item),
-            "sku": get_value("SKU", order_item),
-            "quantity": get_value("Quantity", order_item),
-            "unitPrice": get_value("UnitPrice", order_item),
-            "listPrice": get_value("ListPrice", order_item),
-            "status": get_value("Status", order_item),
-            "date": get_value("Date", order_item),
-            "productWeight": get_value("Product Weight", order_item),
-            "customerId": get_value("CustomerId", order_item),
-            "supplierId": get_linked_item_ids("Supplier", order_item),
-            "supplierName":get_value("Supplier",order_item),
-            "courierId": get_value("courierId", order_item),
-            "courierName":get_value("courier",order_item)
-        })    
-    
-    print('parsed_items-lineitems=--->',parsed_items)
-
-    # fetch the customer_columns for customer info 
-    customer_id = parsed_items[0].get("customerId")
-    customer_columns = fetch_item_with_columns(customer_id)
-    print('customer_columns',customer_columns)
-    if customer_columns:
-        customer_info["id"] = customer_columns["id"]
-        customer_info["name"] = customer_columns["name"]
-        customer_info["email"] = get_value("Email", customer_columns)
-        customer_info["phone"] = get_value("Phone", customer_columns)
-        customer_info["address"] = get_value("Billing Street", customer_columns)
-        customer_info["postal_code"] = get_value("PostalCode", customer_columns)
-
-    print('customer_info----->',customer_info)
-
-    all_product_ids = []
-    for item in parsed_items:
-        all_product_ids.extend(item.get("product_id", []))
-    all_product_ids = [int(pid) for pid in all_product_ids]
-    print('all_product_ids--->',all_product_ids)
-
-    product_supplier_map = {}
-    # supplier_items = get_related_items(SUPPLIER_PRODUCT_BOARD_ID,columnId,campare_vales)
-    # print('Supplier-Items-55--->',supplier_items)
-
-    product_column_id = get_column_id(SUPPLIER_PRODUCT_BOARD_ID,"Product")
-    print('product_column_id',product_column_id)
-
-    lineitems_query = f"""
-        query {{
-        boards(ids: {SUPPLIER_PRODUCT_BOARD_ID}) {{
-            items_page(query_params: {{rules: [ {{ column_id: "{product_column_id}", compare_value: {all_product_ids} }}] , operator: or}}) {{
-            cursor
-            items {{
-                id
-                name
-                column_values {{
-                column {{
-                    title
-                }}
-                id
-                text
-                value
-                ... on MirrorValue {{
-                    display_value
-                    text
-                    value
-                }}
-                ... on BoardRelationValue {{
-                    linked_item_ids
-                    display_value            
-                }}
-                ... on FormulaValue {{
-                    value
-                    id
-                    display_value
-                }}
-                }}
-            }}
-            }}
-        }}
-        }}
-    """
-
-    response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
-    response.raise_for_status()
-    response_json = response.json()
-    print(" JSON ---->", response_json)
-
-    boards = response_json["data"]["boards"]
-    for board in boards:
-        items_page = board.get("items_page", {})
-        items = items_page.get("items", [])
-
-    for item in items:
-        product_ids = get_linked_item_ids("Product", item)
-        supplier_id = get_linked_item_ids("Supplier", item)
-        supplier_name = get_value("SupplierName", item)
-        supplier_adddress = get_value("Supplier Address",item)
-        supplier_phone = get_value("Supplier Phone",item)
-        postal_code = get_value("Postal Code", item)
-        product_weight = get_value("Product Weight", item)
-        rate = get_value("Rate(Per Unit)", item)
-        rating = get_value("Supplier Market Rating", item)
-
-        supplier_info = {
-            "supplier_id": supplier_id[0] if supplier_id else None,
-            "supplier_name": supplier_name,
-            "supplier_address": supplier_adddress,
-            "supplier_phone": supplier_phone,
-            "postal_code": postal_code,
-            "rate": rate,
-            "weight": product_weight,
-            "rating": rating
-        }
-
-        for pid in product_ids:
-            product_supplier_map.setdefault(pid, []).append(supplier_info)
-
-    print('product_supplier_map--->',product_supplier_map)
-
-    for item in parsed_items:
-        product_ids = item.get("product_id", [])
-        suppliers = []
-        for pid in product_ids:
-            if pid in product_supplier_map:
-                suppliers.extend(product_supplier_map[pid])
-        item["suppliers"] = suppliers
-
-    print('parsed_items_with_suppliers',parsed_items)
-    return {
-        "order": order_data,
-        "customer": customer_info,
-        "lineitems": parsed_items,
-    }
-
-def get_column_id(board_id, column_title):
-    """
-    Fetch the column ID dynamically from a board in Monday.com by column title.
-    """
-    
-    query = """
-    query ($boardId: [ID!]) {
-        boards (ids: $boardId) {
+          items (ids: {order_id}) {{
             id
             name
-            columns {
-                id
-                title
-                type
-            }
+            column_values {{
+              column {{ title }}
+              id
+              text
+              value
+              ... on MirrorValue {{
+                  display_value
+                  text
+                  value
+              }}
+              ... on BoardRelationValue {{
+                  linked_item_ids
+                  display_value            
+              }}
+              ... on FormulaValue {{
+                  value
+                  id
+                  display_value
+              }}
+            }}
+          }}
+        }}
+        """
+
+        try:
+            order_response = requests.post(MONDAY_API_URL, headers=headers, json={"query": order_query})
+            order_response.raise_for_status()
+            order_data = order_response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Network error fetching order details: {e}")
+            return None
+        except ValueError as e:
+            print(f"Error parsing JSON for order details: {e}")
+            return None
+
+        print("order_response JSON ---->", order_data)
+        try:
+            order_item = order_data["data"]["items"][0]
+        except (KeyError, IndexError, TypeError) as e:
+            print(f"Error extracting order item: {e}")
+            return None
+
+        order_data = {
+            "id": order_item.get("id"),
+            "name": order_item.get("name"),
+            "status": get_value("Status", order_item),
+            "date": get_value("Date", order_item),
+            "orderId": get_value("OrderId", order_item),
+            "description": get_value("Description", order_item),
+            "totalPrice": get_value("TotalPrice", order_item),
+            "customerPostalCode": get_value("CustomerPostalCode", order_item),
         }
-    }
-    """
-    
-    variables = {"boardId": board_id}
-    
-    headers = {
-        "Authorization": MONDAY_API_KEY,
-        "Content-Type": "application/json"
-    }
-    
-    response = requests.post(
-        MONDAY_API_URL,
-        json={"query": query, "variables": variables},
-        headers=headers
-    )
-    
-    data = response.json()
-    
-    if "errors" in data:
-        raise Exception(f"GraphQL Error: {data['errors']}")
-    
-    columns = data["data"]["boards"][0]["columns"]
-    
-    for col in columns:
-        if col["title"].lower() == column_title.lower():
-            return col["id"]
-    
-    return None
 
-def get_related_items(boardId , columnId, campare_vales):
+        print("order_data-column-value ---->", order_data)
 
-    print('enter in this')
-    
+        try:
+            orderId_column_value_id = get_column_id(ORDER_LINE_ITEMS_BOARD_ID, "Order")
+        except Exception as e:
+            print(f"Error fetching column id: {e}")
+            return None
 
-    headers = {
-        "Authorization": MONDAY_API_KEY,
-        "Content-Type": "application/json"
-    }
+        print('orderId_column_value_id', orderId_column_value_id)
 
-    # compare_values_str = ",".join([f"\"{val}\"" for val in campare_vales])
-
-    lineitems_query = f"""
-        query {{
-        boards(ids: {SUPPLIER_PRODUCT_BOARD_ID}) {{
-            items_page(query_params: {{rules: [ {{ column_id: "{columnId}", compare_value: [{campare_vales}] }}] , operator: or}}) {{
-            cursor
-            items {{
-                id
-                name
-                column_values {{
-                column {{
-                    title
-                }}
-                id
-                text
-                value
-                ... on MirrorValue {{
-                    display_value
-                    text
-                    value
-                }}
-                ... on BoardRelationValue {{
-                    linked_item_ids
-                    display_value            
-                }}
-                ... on FormulaValue {{
-                    value
+        # 2. Fetch line items
+        lineitems_query = f"""
+            query {{
+            boards(ids: {ORDER_LINE_ITEMS_BOARD_ID}) {{
+                items_page(query_params: {{rules: [ {{ column_id: "{orderId_column_value_id}", compare_value: {campare_value} }}] , operator: or}}) {{
+                cursor
+                items {{
                     id
-                    display_value
+                    name
+                    column_values {{
+                      column {{ title }}
+                      id
+                      text
+                      value
+                      ... on MirrorValue {{ display_value text value }}
+                      ... on BoardRelationValue {{ linked_item_ids display_value }}
+                      ... on FormulaValue {{ value id display_value }}
+                    }}
                 }}
                 }}
             }}
             }}
-        }}
-        }}
-    """
+        """
 
-    response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
-    response.raise_for_status()
-    response_json = response.json()
-    print(" JSON ---->", response_json)
+        try:
+            response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
+            response.raise_for_status()
+            response_json = response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Network error fetching line items: {e}")
+            return None
+        except ValueError as e:
+            print(f"Error parsing JSON for line items: {e}")
+            return None
 
-    boards = response_json["data"]["boards"]
-    for board in boards:
-        items_page = board.get("items_page", {})
-        items = items_page.get("items", [])
+        print(" JSON ---->", response_json)
+        items = []
+        try:
+            boards = response_json["data"]["boards"]
+            for board in boards:
+                items_page = board.get("items_page", {})
+                items = items_page.get("items", [])
+        except (KeyError, TypeError) as e:
+            print(f"Error extracting line items: {e}")
 
-    print('Suppliers items-->',items)
-    return items
+        parsed_items = []
+        for order_item in items:
+            try:
+                parsed_items.append({
+                    "id": order_item.get("id"),
+                    "name": order_item.get("name"),
+                    "orderNumber": get_value("OrderNumber", order_item),
+                    "product": get_value("Product", order_item),
+                    "product_id": get_linked_item_ids("Product", order_item),
+                    "productCode": get_value("lookup_mks1f46y", order_item),
+                    "sku": get_value("SKU", order_item),
+                    "quantity": get_value("Quantity", order_item),
+                    "unitPrice": get_value("UnitPrice", order_item),
+                    "listPrice": get_value("ListPrice", order_item),
+                    "status": get_value("Status", order_item),
+                    "date": get_value("Date", order_item),
+                    "productWeight": get_value("Product Weight", order_item),
+                    "customerId": get_value("CustomerId", order_item),
+                    "supplierId": get_linked_item_ids("Supplier", order_item),
+                    "supplierName": get_value("Supplier", order_item),
+                    "courierId": get_value("courierId", order_item),
+                    "courierName": get_value("courier", order_item)
+                })
+            except Exception as e:
+                print(f"Error parsing line item: {e}")
+
+        print('parsed_items-lineitems=--->', parsed_items)
+
+        # 3. Fetch customer info
+        if parsed_items:
+            customer_id = parsed_items[0].get("customerId")
+            try:
+                customer_columns = fetch_item_with_columns(customer_id)
+                print('customer_columns', customer_columns)
+                if customer_columns:
+                    customer_info["id"] = customer_columns.get("id")
+                    customer_info["name"] = customer_columns.get("name")
+                    customer_info["email"] = get_value("Email", customer_columns)
+                    customer_info["phone"] = get_value("Phone", customer_columns)
+                    customer_info["address"] = get_value("Billing Street", customer_columns)
+                    customer_info["postal_code"] = get_value("PostalCode", customer_columns)
+            except Exception as e:
+                print(f"Error fetching customer info: {e}")
+
+        print('customer_info----->', customer_info)
+
+        # 4. Supplier-product mapping
+        all_product_ids = []
+        for item in parsed_items:
+            try:
+                all_product_ids.extend(item.get("product_id", []))
+            except Exception as e:
+                print(f"Error extending product ids: {e}")
+        all_product_ids = [int(pid) for pid in all_product_ids if str(pid).isdigit()]
+        print('all_product_ids--->', all_product_ids)
+
+        product_supplier_map = {}
+        try:
+            product_column_id = get_column_id(SUPPLIER_PRODUCT_BOARD_ID, "Product")
+        except Exception as e:
+            print(f"Error fetching product column id: {e}")
+            return None
+
+        print('product_column_id', product_column_id)
+
+        lineitems_query = f"""
+            query {{
+            boards(ids: {SUPPLIER_PRODUCT_BOARD_ID}) {{
+                items_page(query_params: {{rules: [ {{ column_id: "{product_column_id}", compare_value: {all_product_ids} }}] , operator: or}}) {{
+                cursor
+                items {{
+                    id
+                    name
+                    column_values {{
+                      column {{ title }}
+                      id
+                      text
+                      value
+                      ... on MirrorValue {{ display_value text value }}
+                      ... on BoardRelationValue {{ linked_item_ids display_value }}
+                      ... on FormulaValue {{ value id display_value }}
+                    }}
+                }}
+                }}
+            }}
+            }}
+        """
+
+        try:
+            response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
+            response.raise_for_status()
+            response_json = response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Network error fetching supplier-product mapping: {e}")
+            return None
+        except ValueError as e:
+            print(f"Error parsing JSON for supplier-product mapping: {e}")
+            return None
+
+        print(" JSON ---->", response_json)
+        try:
+            boards = response_json["data"]["boards"]
+            for board in boards:
+                items_page = board.get("items_page", {})
+                items = items_page.get("items", [])
+        except (KeyError, TypeError) as e:
+            print(f"Error extracting supplier-product items: {e}")
+            items = []
+
+        product_supplier_map = {}
+        for item in items:
+            try:
+                product_ids = get_linked_item_ids("Product", item)
+                supplier_id = get_linked_item_ids("Supplier", item)
+                supplier_name = get_value("SupplierName", item)
+                supplier_adddress = get_value("Supplier Address", item)
+                supplier_phone = get_value("Supplier Phone", item)
+                postal_code = get_value("Postal Code", item)
+                product_weight = get_value("Product Weight", item)
+                rate = get_value("Rate(Per Unit)", item)
+                rating = get_value("Supplier Market Rating", item)
+
+                supplier_info = {
+                    "supplier_id": supplier_id[0] if supplier_id else None,
+                    "supplier_name": supplier_name,
+                    "supplier_address": supplier_adddress,
+                    "supplier_phone": supplier_phone,
+                    "postal_code": postal_code,
+                    "rate": rate,
+                    "weight": product_weight,
+                    "rating": rating
+                }
+
+                for pid in product_ids:
+                    product_supplier_map.setdefault(pid, []).append(supplier_info)
+            except Exception as e:
+                print(f"Error parsing supplier-product item: {e}")
+
+        print('product_supplier_map--->', product_supplier_map)
+
+        for item in parsed_items:
+            try:
+                product_ids = item.get("product_id", [])
+                suppliers = []
+                for pid in product_ids:
+                    if pid in product_supplier_map:
+                        suppliers.extend(product_supplier_map[pid])
+                item["suppliers"] = suppliers
+            except Exception as e:
+                print(f"Error mapping suppliers to line item: {e}")
+
+        print('parsed_items_with_suppliers', parsed_items)
+        return {
+            "order": order_data,
+            "customer": customer_info,
+            "lineitems": parsed_items,
+        }
+
+    except Exception as e:
+        print(f"Unexpected error in get_order_with_lineitems: {e}")
+        return None
 
 
 def get_value(title,order_item):
