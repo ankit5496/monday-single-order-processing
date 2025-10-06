@@ -7,6 +7,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import Select from "react-select";
 import mondaySdk from "monday-sdk-js";
+// import { useToast } from "@/components/ui/use-toast";
 
 // type MondayContext = {
 //   itemId?: number;
@@ -81,7 +82,7 @@ type GroupedManifests = {
 };
 
 export default function OrderDetail() {
-  const monday = mondaySdk();
+  
   const [order, setOrder] = useState<Order | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -90,21 +91,28 @@ export default function OrderDetail() {
   const [buttonLoading, setButtonLoading] = useState(false);
   const [itemId, setItemId] = useState<number | null>(null);
 
-  monday.get("context").then((res) => {
-      const context = res.data;
+   console.log('set-itemId',itemId);
 
-      // Safely check if boardId exists
-      if ("boardId" in context && "itemId" in context) {
-        const boardId = Number(context.boardId);
-        const itemId = Number(context.itemId);
+   const monday = mondaySdk();
+  
+    useEffect(() => {
+      
+      monday.get("context").then((res) => {
+        const context = res.data;
 
-        console.log("Board ID:", boardId);
-        console.log("Item ID:", itemId);
-      } else {
-        console.warn("Board ID or Item ID not available in this context:", context);
-      }
-    });
-
+        if ("boardId" in context && "itemId" in context) {
+            const boardId = Number(context.boardId);
+            const itemId = Number(context.itemId);
+            
+            console.log("Board ID:", boardId);
+            console.log("Item ID:", itemId);
+            setItemId(itemId);
+            fetchOrderWithLineItems(itemId);
+        } else {
+          console.warn("Board ID or Item ID not available", context);
+        }
+      });    
+  }, []);
 
   const totalQuantity: number = lineItems.reduce(
     (sum, item) => sum + Number(item.quantity),
@@ -115,15 +123,18 @@ export default function OrderDetail() {
     0
   );
 
-  const fetchOrderWithLineItems = async () => {
+  const fetchOrderWithLineItems = async (itemId: number) => {
+    console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>("http://127.0.0.1:8000/order");
+      const getResponse = await axios.get<ApiResponse>("http://127.0.0.1:8000/order",
+        {   params: { itemId },}
+         );
       setOrder(getResponse.data.order);
       setLineItems(getResponse.data.lineitems);
       setCustomerData(getResponse.data.customer);
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.log("Error fetching data:---->", err);
       setError("Failed to load order.");
     } finally {
       setLoading(false);
@@ -203,7 +214,15 @@ const handleGenerateManifestAndLabel = async () => {
   if (!lineItems.length || !customer_info) return;
 
   try {
-    const manifests = groupLineItemsForManifest(lineItems);
+
+    const pendingItems = lineItems.filter(item => item.status !== "Manifest Generated");
+
+    if (!pendingItems.length) {
+      // alert("All manifests are already generated!");
+      console.log('All manifests are already generated!');
+      return;
+    }
+    const manifests = groupLineItemsForManifest(pendingItems);
 
     for (const manifest of manifests) {
       const normalizedSupplierId = Array.isArray(manifest.supplierId)
@@ -269,28 +288,16 @@ const handleGenerateManifestAndLabel = async () => {
 
 const handleClick = async () => {
     try {
-      setButtonLoading(true); // start spinner for button
-      await handleGenerateManifestAndLabel(); // your async logic
-      await fetchOrderWithLineItems();
+      setButtonLoading(true);                     // start spinner for button
+      await handleGenerateManifestAndLabel(); 
+      await fetchOrderWithLineItems(itemId!);
     } finally {
-      setButtonLoading(false); // stop spinner
+      setButtonLoading(false);                    // stop spinner
     }
   };
 
   const allGenerated = lineItems.every(item => item.status === "Manifest Generated");
 
-  useEffect(() => {
-    // monday.listen("context", (res: { data: Context }) => {
-    //   console.log("Context:", res);
-
-    //   // safely narrow down the type
-    //   if ("itemId" in res.data) {
-    //     setItemId(res.data.itemId as number);
-    //   }
-    // });
-    fetchOrderWithLineItems();
-    
-  }, []);
 
   return (
     <div className="relative">
@@ -473,19 +480,18 @@ const handleClick = async () => {
           {/* Single Action Button */}
           <div className="flex justify-end">
               <Button
-                className="bg-green-600 hover:bg-green-700 text-white relative"
-                onClick={handleClick}
-                disabled={buttonLoading || allGenerated} 
-              >
-                {buttonLoading ? (
-                  <Loader2 className="animate-spin h-5 w-5 absolute inset-0 m-auto" />
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Generate Manifest & Label
-                  </>
-                )}
-              </Button>
+              className="bg-green-600 hover:bg-green-700 text-white relative"
+              onClick={handleClick}
+              disabled={buttonLoading || allGenerated}>
+              {buttonLoading ? (
+                <Loader2 className="animate-spin h-5 w-5 absolute inset-0 m-auto" />
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Generate Manifest & Label
+                </>
+              )}
+             </Button>
           </div>
         </div>
       )}
