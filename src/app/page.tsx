@@ -123,7 +123,7 @@ export default function OrderDetail() {
   );
 
   const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-  print('apiBaseUrl---->',apiBaseUrl)
+  console.log('apiBaseUrl---->', apiBaseUrl);
   const fetchOrderWithLineItems = async (itemId: number) => {
     console.log('in this fetc order fun');
     try {
