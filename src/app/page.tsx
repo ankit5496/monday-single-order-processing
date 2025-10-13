@@ -90,24 +90,23 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [itemId, setItemId] = useState<number | null>(null);
-
-   console.log('set-itemId',itemId);
+  
+  console.log('set-itemId',itemId);
 
    const monday = mondaySdk();
   
     useEffect(() => {
-      
       monday.get("context").then((res) => {
         const context = res.data;
 
         if ("boardId" in context && "itemId" in context) {
-            const boardId = Number(context.boardId);
-            const itemId = Number(context.itemId);
-            
-            console.log("Board ID:", boardId);
-            console.log("Item ID:", itemId);
-            setItemId(itemId);
-            fetchOrderWithLineItems(itemId);
+              const boardId = Number(context.boardId);
+              const itemId = Number(context.itemId);
+              
+              console.log("Board ID:", boardId);
+              console.log("Item ID:", itemId);
+              setItemId(itemId);
+              fetchOrderWithLineItems(itemId);
         } else {
           console.warn("Board ID or Item ID not available in this context:", context);
         }
