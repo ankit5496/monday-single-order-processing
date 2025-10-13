@@ -109,7 +109,7 @@ export default function OrderDetail() {
             setItemId(itemId);
             fetchOrderWithLineItems(itemId);
         } else {
-          console.warn("Board ID or Item ID not available", context);
+          console.warn("Board ID or Item ID not available in this context:", context);
         }
       });    
   }, []);
@@ -123,11 +123,12 @@ export default function OrderDetail() {
     0
   );
 
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
   const fetchOrderWithLineItems = async (itemId: number) => {
     console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>("http://127.0.0.1:8000/order",
+      const getResponse = await axios.get<ApiResponse>(`${apiBaseUrl}/order`,
         {   params: { itemId },}
          );
       setOrder(getResponse.data.order);
@@ -158,7 +159,15 @@ export default function OrderDetail() {
       cod: 1,
     };
 
-    try {
+    try { //without sorting 
+      // const res = await fetch("http://127.0.0.1:8000/get-couriers", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(payload),
+      // });
+      // const data = await res.json();
+      
+      //with sorting
       const res = await fetch("http://127.0.0.1:8000/get-couriers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,6 +175,8 @@ export default function OrderDetail() {
       });
       const data = await res.json();
 
+
+      
       const couriers =
         data.couriers?.data?.available_courier_companies?.map((c: any) => ({
           courier_id: c.courier_company_id,
@@ -483,7 +494,7 @@ const handleClick = async () => {
               className="bg-green-600 hover:bg-green-700 text-white relative"
               onClick={handleClick}
               disabled={buttonLoading || allGenerated}>
-              {buttonLoading ? (
+              {buttonLoading? (
                 <Loader2 className="animate-spin h-5 w-5 absolute inset-0 m-auto" />
               ) : (
                 <>
