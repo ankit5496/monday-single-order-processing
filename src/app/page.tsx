@@ -123,12 +123,12 @@ export default function OrderDetail() {
     0
   );
 
-  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+  // const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
   const fetchOrderWithLineItems = async (itemId: number) => {
     console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>(`${apiBaseUrl}/order`,
+      const getResponse = await axios.get<ApiResponse>("http://127.0.0.1:8000/order",
         {   params: { itemId },}
          );
       setOrder(getResponse.data.order);
