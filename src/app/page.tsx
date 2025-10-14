@@ -8,6 +8,10 @@ import { useEffect, useState } from "react";
 import Select from "react-select";
 import mondaySdk from "monday-sdk-js";
 // import { useToast } from "@/components/ui/use-toast";
+import dotenv from "dotenv";
+
+dotenv.config({ path: "./.env" });
+
 
 // type MondayContext = {
 //   itemId?: number;
