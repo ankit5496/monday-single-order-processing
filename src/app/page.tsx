@@ -116,12 +116,14 @@ export default function OrderDetail() {
   // }, []);
 
 
-  useEffect(() =>{
-      const boardId = 2023614902;
-      const itemId = 2023614909;
-      setItemId(itemId);
-      fetchOrderWithLineItems(itemId);
-  }
+   useEffect(() => {
+    const boardId = 2023614902;
+    const itemId = 2023614909;
+  
+    setItemId(itemId);
+    fetchOrderWithLineItems(itemId);
+  }, []); // <-- Add dependency array so it runs only once on mount
+
 
   const totalQuantity: number = lineItems.reduce(
     (sum, item) => sum + Number(item.quantity),
