@@ -100,10 +100,10 @@ export default function OrderDetail() {
         const context = res.data;
 
         if ("boardId" in context && "itemId" in context) {
-              // const boardId = Number(context.boardId);
-              const boardId = 2023614902;
-              // const itemId = Number(context.itemId);
-              const itemId = 2023614909;
+              const boardId = Number(context.boardId);
+              // const boardId = 2023614902;
+              const itemId = Number(context.itemId);
+              // const itemId = 2023614909;
               
               console.log("Board ID:", boardId);
               console.log("Item ID:", itemId);
@@ -140,7 +140,7 @@ export default function OrderDetail() {
     console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>("/order?",
+      const getResponse = await axios.get<ApiResponse>(`${apiBaseUrl}/order`,
         {   params: { itemId },}
          );
       setOrder(getResponse.data.order);
