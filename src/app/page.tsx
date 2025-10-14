@@ -95,34 +95,34 @@ export default function OrderDetail() {
 
    const monday = mondaySdk();
   
-  //   useEffect(() => {
-  //     monday.get("context").then((res) => {
-  //       const context = res.data;
+    useEffect(() => {
+      monday.get("context").then((res) => {
+        const context = res.data;
 
-  //       if ("boardId" in context && "itemId" in context) {
-  //             // const boardId = Number(context.boardId);
-  //             const boardId = 2023614902;
-  //             // const itemId = Number(context.itemId);
-  //             const itemId = 2023614909;
+        if ("boardId" in context && "itemId" in context) {
+              // const boardId = Number(context.boardId);
+              const boardId = 2023614902;
+              // const itemId = Number(context.itemId);
+              const itemId = 2023614909;
               
-  //             console.log("Board ID:", boardId);
-  //             console.log("Item ID:", itemId);
-  //             setItemId(itemId);
-  //             fetchOrderWithLineItems(itemId);
-  //       } else {
-  //         console.warn("Board ID or Item ID not available in this context:", context);
-  //       }
-  //     });    
-  // }, []);
+              console.log("Board ID:", boardId);
+              console.log("Item ID:", itemId);
+              setItemId(itemId);
+              fetchOrderWithLineItems(itemId);
+        } else {
+          console.warn("Board ID or Item ID not available in this context:", context);
+        }
+      });    
+  }, []);
 
 
-   useEffect(() => {
-    const boardId = 2023614902;
-    const itemId = 2023614909;
+  //  useEffect(() => {
+  //   const boardId = 2023614902;
+  //   const itemId = 2023614909;
   
-    setItemId(itemId);
-    fetchOrderWithLineItems(itemId);
-  }, []); // <-- Add dependency array so it runs only once on mount
+  //   setItemId(itemId);
+  //   fetchOrderWithLineItems(itemId);
+  // }, []); // <-- Add dependency array so it runs only once on mount
 
 
   const totalQuantity: number = lineItems.reduce(
@@ -140,7 +140,7 @@ export default function OrderDetail() {
     console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>("/order",
+      const getResponse = await axios.get<ApiResponse>("/order?",
         {   params: { itemId },}
          );
       setOrder(getResponse.data.order);
