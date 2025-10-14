@@ -90,7 +90,7 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [itemId, setItemId] = useState<number | null>(null);
-  const apiBaseUrl = env.REACT_APP_API_BASE_URL;
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
   console.log('apiBaseUrl---->', apiBaseUrl);
   
   console.log('set-itemId',itemId);
