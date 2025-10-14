@@ -128,7 +128,7 @@ export default function OrderDetail() {
     console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>(`${apiBaseUrl}/order`,
+      const getResponse = await axios.get<ApiResponse>("/order",
         {   params: { itemId },}
          );
       setOrder(getResponse.data.order);
@@ -168,7 +168,7 @@ export default function OrderDetail() {
       // const data = await res.json();
       
       //with sorting
-      const res = await fetch("http://127.0.0.1:8000/get-couriers", {
+      const res = await fetch("/get-couriers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
