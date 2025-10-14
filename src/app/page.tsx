@@ -101,7 +101,8 @@ export default function OrderDetail() {
 
         if ("boardId" in context && "itemId" in context) {
               const boardId = Number(context.boardId);
-              const itemId = Number(context.itemId);
+              // const itemId = Number(context.itemId);
+              const itemId = 2023614909;
               
               console.log("Board ID:", boardId);
               console.log("Item ID:", itemId);
