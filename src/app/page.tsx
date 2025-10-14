@@ -140,7 +140,7 @@ export default function OrderDetail() {
     console.log('in this fetc order fun');
     try {
       setLoading(true);
-      const getResponse = await axios.get<ApiResponse>("https://monday-single-order-processing.vercel.app/order",
+      const getResponse = await axios.get<ApiResponse>("https://monday-single-order-processing-hh2d.vercel.app/order",
         {   params: { itemId }}
          );
       setOrder(getResponse.data.order);
