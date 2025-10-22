@@ -5,6 +5,7 @@ from flask_cors import CORS
 from orders import generate_manifest
 from orders import generate_label
 from orders import check_courier_serviceability
+from monday_utils.items import sort_couriers_direct
 MONDAY_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjUyMjU5NjU2OSwiYWFpIjoxMSwidWlkIjo3Njc0NjQ1OSwiaWFkIjoiMjAyNS0wNi0wNVQxNTowNzowNC40MDFaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6Mjk2NTAyMjEsInJnbiI6ImFwc2UyIn0.TY4oQYraqw6fuq6I10A5Ga5JMn3LGoZv8qIQawbQlDY"
 
 app = Flask(__name__)
@@ -14,7 +15,11 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/order", methods=["GET"])
 def order_details():
-    order_id = 2023614909
+    print("request.args:", request.args)
+    order_id = request.args.get("itemId")
+    print('order-id', order_id)
+    if not order_id:
+        return jsonify({"error": "Missing itemId"}), 400
     data = get_order_with_lineitems(order_id)
     print('data--->',data)
     return jsonify(data)
@@ -30,7 +35,6 @@ def get_couriers():
     print('data for courier customer_postal-->',customer_postal)
     weight = data["weight"]
     cod = data.get("cod", 0)
-
     try:
         couriers = check_courier_serviceability(
             pickup_pincode=supplier_postal,
@@ -38,9 +42,27 @@ def get_couriers():
             weight=weight,
             cod=cod
         )
+        print('couriers--->',couriers)
         return jsonify({"couriers": couriers})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/sort_couriers', methods=['POST'])
+def sort_couriers():
+    print("=== ROUTE FUNCTION CALLED ===", flush=True)
+
+    try:
+        data = request.get_json()
+        couriers = data.get("couriers", [])
+
+        if not couriers:
+            return jsonify({"success": False, "error": "No couriers provided"}), 400
+
+        sorted_couriers = sort_couriers_direct(couriers)
+        return jsonify({"success": True, "couriers": sorted_couriers})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
     
 
 @app.route("/generate-manifest", methods=["POST"])
@@ -136,4 +158,6 @@ def users():
 
 
 if __name__  == '__main__':
-    app.run(debug=True, port=8000)
+    # app.run(debug=True, port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host='0.0.0.0', port=port)
