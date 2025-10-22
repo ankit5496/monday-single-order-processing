@@ -137,7 +137,7 @@ export default function OrderDetail() {
       //   { params: { itemId } }
       // );
       const res = await fetch(`https://monday-single-order-processing-hh2d.vercel.app/order?itemId=${itemId}`);
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      if (!res.ok) throw new Error(`Error:-------> ${res.status}`);
       const data: ApiResponse = await res.json();
 
       console.log('orderDetails--->',data);
