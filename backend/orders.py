@@ -12,7 +12,8 @@ from datetime import datetime
 from weasyprint import HTML
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
-from backend.monday_utils.items import fetch_item_with_columns
+from monday_utils.items import fetch_item_with_columns
+from monday_utils.items import sort_suppliers_direct
 
 MONDAY_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjUyMjU5NjU2OSwiYWFpIjoxMSwidWlkIjo3Njc0NjQ1OSwiaWFkIjoiMjAyNS0wNi0wNVQxNTowNzowNC40MDFaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6Mjk2NTAyMjEsInJnbiI6ImFwc2UyIn0.TY4oQYraqw6fuq6I10A5Ga5JMn3LGoZv8qIQawbQlDY"
 ORDERS_BOARD_ID = 2023614902   
@@ -309,6 +310,18 @@ def get_order_with_lineitems(order_id):
 
         print('product_supplier_map--->', product_supplier_map)
 
+        for pid, suppliers in product_supplier_map.items():
+            try:
+                # Pass the list to your sorting function
+                sorted_suppliers = sort_suppliers_direct([
+                    {"price": s["rate"], "rating": s["rating"], **s} for s in suppliers
+                ])
+                print('sorted_suppliers--->',sorted_suppliers)
+                product_supplier_map[pid] = sorted_suppliers
+            except Exception as e:
+                print(f"Error sorting suppliers for product {pid}: {e}")
+
+        print('product_supplier_map_after_sorting--->', product_supplier_map)
         for item in parsed_items:
             try:
                 product_ids = item.get("product_id", [])
@@ -330,6 +343,113 @@ def get_order_with_lineitems(order_id):
     except Exception as e:
         print(f"Unexpected error in get_order_with_lineitems: {e}")
         return None
+
+
+def get_column_id(board_id, column_title):
+    """
+    Fetch the column ID dynamically from a board in Monday.com by column title.
+    """
+    
+    query = """
+    query ($boardId: [ID!]) {
+        boards (ids: $boardId) {
+            id
+            name
+            columns {
+                id
+                title
+                type
+            }
+        }
+    }
+    """
+    
+    variables = {"boardId": board_id}
+    
+    headers = {
+        "Authorization": MONDAY_API_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(
+        MONDAY_API_URL,
+        json={"query": query, "variables": variables},
+        headers=headers
+    )
+    
+    data = response.json()
+    
+    if "errors" in data:
+        raise Exception(f"GraphQL Error: {data['errors']}")
+    
+    columns = data["data"]["boards"][0]["columns"]
+    
+    for col in columns:
+        if col["title"].lower() == column_title.lower():
+            return col["id"]
+    
+    return None
+
+def get_related_items(boardId , columnId, campare_vales):
+
+    print('enter in this')
+    
+
+    headers = {
+        "Authorization": MONDAY_API_KEY,
+        "Content-Type": "application/json"
+    }
+
+    # compare_values_str = ",".join([f"\"{val}\"" for val in campare_vales])
+
+    lineitems_query = f"""
+        query {{
+        boards(ids: {SUPPLIER_PRODUCT_BOARD_ID}) {{
+            items_page(query_params: {{rules: [ {{ column_id: "{columnId}", compare_value: [{campare_vales}] }}] , operator: or}}) {{
+            cursor
+            items {{
+                id
+                name
+                column_values {{
+                column {{
+                    title
+                }}
+                id
+                text
+                value
+                ... on MirrorValue {{
+                    display_value
+                    text
+                    value
+                }}
+                ... on BoardRelationValue {{
+                    linked_item_ids
+                    display_value            
+                }}
+                ... on FormulaValue {{
+                    value
+                    id
+                    display_value
+                }}
+                }}
+            }}
+            }}
+        }}
+        }}
+    """
+
+    response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
+    response.raise_for_status()
+    response_json = response.json()
+    print(" JSON ---->", response_json)
+
+    boards = response_json["data"]["boards"]
+    for board in boards:
+        items_page = board.get("items_page", {})
+        items = items_page.get("items", [])
+
+    print('Suppliers items-->',items)
+    return items
 
 
 def get_value(title,order_item):
