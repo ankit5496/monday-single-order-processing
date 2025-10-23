@@ -1,1 +1,13 @@
 
+{
+  "builds": [
+    { "src": "main.py", "use": "@vercel/python" },
+    { "src": "next.config.ts", "use": "@vercel/next" }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/main.py"
+    }
+  ]
+}
