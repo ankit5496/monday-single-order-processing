@@ -91,7 +91,7 @@ export default function OrderDetail() {
   const [processing, setProcessing] = useState(false); 
 
   const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-  // console.log('apiBaseUrl--->',apiBaseUrl);
+  console.log('apiBaseUrl--->',apiBaseUrl);
 
   const monday = mondaySdk();
 
@@ -136,7 +136,7 @@ export default function OrderDetail() {
       //   "http://127.0.0.1:8000/order",
       //   { params: { itemId } }
       // );
-      const res = await fetch(`https://monday-single-order-processing-hh2d.vercel.app/order?itemId=${itemId}`);
+      const res = await fetch(`api/order?itemId=${itemId}`);
       if (!res.ok) throw new Error(`Error:-------> ${res.status}`);
       const data: ApiResponse = await res.json();
 
