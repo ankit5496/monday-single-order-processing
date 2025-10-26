@@ -2,6 +2,7 @@ flask
 requests
 WeasyPrint
 PyPDF2
+gunicorn
 reportlab
 weasyprint
 pytz
