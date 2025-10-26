@@ -136,7 +136,7 @@ export default function OrderDetail() {
       //   "http://127.0.0.1:8000/order",
       //   { params: { itemId } }
       // );
-      const res = await fetch(`http://127.0.0.1:8000/order?itemId=${itemId}`);
+      const res = await fetch(`https://monday-single-order-processing-k845.onrender.com/order?itemId=${itemId}`);
       if (!res.ok) throw new Error(`Error:-------> ${res.status}`);
       const data: ApiResponse = await res.json();
 
