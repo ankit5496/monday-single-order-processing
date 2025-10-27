@@ -560,7 +560,7 @@ def generate_label(lineitems, supplierId, supplierName, supplierAddress, courier
             os.remove(pdf)
         except Exception as e:
             print("Error deleting file:", pdf, e)
-    print('label--',orders,flush=True')
+    print('label--',orders,flush=True)
     return orders
 
 
