@@ -797,7 +797,7 @@ def generate_label_pdf_from_html(label_data):
 
     print("PDF file path to be written:", file_path)
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = Environment(loader=FileSystemLoader("backend/templates"))
     template = env.get_template("label-pdf.html")
 
     html_out = template.render(
