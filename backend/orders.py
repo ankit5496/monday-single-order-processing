@@ -32,14 +32,14 @@ MONDAY_API_URL = "https://api.monday.com/v2"
 
 def get_order_with_lineitems(order_id):
     try:
-        print('order_id in lineitem', order_id)
+        print('order_id in lineitem', order_id,flush=True)
         orderId = [order_id]
-        print('orderId----->', orderId)
+        print('orderId----->', orderId,flush=True)
 
         try:
             campare_value = [int(x) for x in orderId]
         except (ValueError, TypeError) as e:
-            print(f"Error converting orderId to int: {e}")
+            print(f"Error converting orderId to int: {e}",flush=True)
             return None
 
         headers = {
@@ -346,9 +346,9 @@ def get_order_with_lineitems(order_id):
 
 
 def get_column_id(board_id, column_title):
-    """
-    Fetch the column ID dynamically from a board in Monday.com by column title.
-    """
+  
+    # Fetch the column ID dynamically from a board in Monday.com by column title.
+   
     
     query = """
     query ($boardId: [ID!]) {
@@ -467,11 +467,13 @@ def get_linked_item_ids(title, order_item):
     return None
 
 def generate_label(lineitems, supplierId, supplierName, supplierAddress, courierId, courierName, customer):
+
+    print('Enter generate label',flush=True)
     global supplier_manifest_monday_record_id
 
     pdf_files = []
     orders = []
-    print('lineitems_get-->',lineitems)
+    print('lineitems_get-->',lineitems,flush=True)
 
     for item in lineitems:
         order_data = {
@@ -528,7 +530,7 @@ def generate_label(lineitems, supplierId, supplierName, supplierAddress, courier
                 "name": courierName
             }
         }
-        print("label_data_pdf --->", label_data)
+        print("label_data_pdf --->", label_data,flush=True)
 
         # Generate PDF for each item
         file_path = generate_label_pdf_from_html(label_data)
@@ -558,7 +560,7 @@ def generate_label(lineitems, supplierId, supplierName, supplierAddress, courier
             os.remove(pdf)
         except Exception as e:
             print("Error deleting file:", pdf, e)
-
+    print('label--',orders,flush=True')
     return orders
 
 
@@ -568,7 +570,7 @@ def generate_manifest(order_line_items, supplierId, supplierName, supplierAddres
     global supplier_manifest_monday_record_id
     orders = []
 
-    print("courier for pdf -->", courierName)
+    print("courier for pdf -->", courierName,flush=True)
 
     for item in order_line_items:
         order_data = {
@@ -589,10 +591,10 @@ def generate_manifest(order_line_items, supplierId, supplierName, supplierAddres
         orders.append(order_data)
 
     # Log supplier/courier info
-    print("supplierName for pdf:", supplierName)
-    print("supplierId for pdf:", supplierId)
-    print("supplierAddress for pdf:", supplierAddress)
-    print("courierName for pdf:", courierName)
+    print("supplierName for pdf:", supplierName,flush=True)
+    print("supplierId for pdf:", supplierId,flush=True)
+    print("supplierAddress for pdf:", supplierAddress,flush=True)
+    print("courierName for pdf:", courierName,flush=True)
 
     # --- Create supplier manifest record ---
     supplier_manifest_mondayrecord = create_supplier_manifest_record(
