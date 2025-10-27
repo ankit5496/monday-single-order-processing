@@ -95,30 +95,30 @@ export default function OrderDetail() {
 
   const monday = mondaySdk();
 
-  //   useEffect(() => {
+    useEffect(() => {
 
-  //     monday.get("context").then((res) => {
-  //       const context = res.data;
+      monday.get("context").then((res) => {
+        const context = res.data;
 
-  //       if ("boardId" in context && "itemId" in context) {
-  //           const boardId = Number(context.boardId);
-  //           const itemId = Number(context.itemId);
+        if ("boardId" in context && "itemId" in context) {
+            const boardId = Number(context.boardId);
+            const itemId = Number(context.itemId);
 
-  //           console.log("Board ID:", boardId);
-  //           console.log("Item ID:", itemId);
-  //           setItemId(itemId);
-  //           fetchOrderWithLineItems(itemId);
-  //       } else {
-  //         console.warn("Board ID or Item ID not available in this context:", context);
-  //       }
-  //     });
-  // }, []);
-
-  useEffect(() => {
-    const itemId = 2023614909;
-    setItemId(itemId);
-    fetchOrderWithLineItems(itemId);
+            console.log("Board ID:", boardId);
+            console.log("Item ID:", itemId);
+            setItemId(itemId);
+            fetchOrderWithLineItems(itemId);
+        } else {
+          console.warn("Board ID or Item ID not available in this context:", context);
+        }
+      });
   }, []);
+
+  // useEffect(() => {
+  //   const itemId = 2023614909;
+  //   setItemId(itemId);
+  //   fetchOrderWithLineItems(itemId);
+  // }, []);
 
   const totalQuantity: number = lineItems.reduce(
     (sum, item) => sum + Number(item.quantity),
@@ -136,6 +136,7 @@ export default function OrderDetail() {
       //   "http://127.0.0.1:8000/order",
       //   { params: { itemId } }
       // );
+      console.log('items id ----->',itemId);
       const res = await fetch(`https://monday-single-order-processing-k845.onrender.com/order?itemId=${itemId}`);
       if (!res.ok) throw new Error(`Error:-------> ${res.status}`);
       const data: ApiResponse = await res.json();
