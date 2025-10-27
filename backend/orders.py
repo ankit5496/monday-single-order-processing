@@ -774,7 +774,7 @@ def generate_manifest_pdf_from_html(orders, supplierName, supplierAddress,suppli
     )
 
     HTML(string=html_out).write_pdf(file_path)
-    print("Manifest PDF generated at:", file_path)
+    print("Manifest PDF generated at:", file_path,flush=True)
 
     return file_path
 
@@ -813,7 +813,7 @@ def generate_label_pdf_from_html(label_data):
     )
 
     HTML(string=html_out).write_pdf(file_path)
-    print("Label PDF generated at:", file_path)
+    print("Label PDF generated at:", file_path,flush=True)
 
     return file_path
 
@@ -866,7 +866,7 @@ def create_supplier_manifest_record(orders, supplier_name, supplier_item_id, cou
     )
 
     data = response.json()
-    print("Response from Monday:", data)
+    print("Response from Monday:", data,flush=True)
 
     item_id = data.get("data", {}).get("create_item", {}).get("id")
     success = item_id is not None
