@@ -4,6 +4,5 @@ WeasyPrint
 PyPDF2
 gunicorn
 reportlab
-weasyprint
 pytz
 flask_cors
