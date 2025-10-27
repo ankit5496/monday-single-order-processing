@@ -93,7 +93,7 @@ def generate_manifests():
             courierName,
             customer
         )
-
+        print('Manifest-results--->',results,flush=True)
         return jsonify(results)
     except Exception as e:
         print("Exception occurred:", e, flush=True)
@@ -136,7 +136,7 @@ def generate_labels():
             courierName,
             customer
         )
-        # print('results',results)
+        print('Label-results-->',results,flush=True)
         return jsonify(results)
     except Exception as e:
         print("Exception occurred:", e, flush=True)
@@ -145,6 +145,5 @@ def generate_labels():
 
 
 if __name__  == '__main__':
-#     port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
-    app.run(debug=True, port=8000)
