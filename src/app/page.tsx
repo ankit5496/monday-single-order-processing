@@ -194,7 +194,7 @@ export default function OrderDetail() {
     };
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/get-couriers", {
+      const res = await fetch("https://monday-single-order-processing-k845.onrender.com/get-couriers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -306,7 +306,7 @@ export default function OrderDetail() {
         console.log("manifestPayload---->", manifestPayload);
 
         // Generate manifest PDF
-        const manifestResponse = await fetch("http://127.0.0.1:8000/generate-manifest", {
+        const manifestResponse = await fetch("https://monday-single-order-processing-k845.onrender.com/generate-manifest", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -331,7 +331,7 @@ export default function OrderDetail() {
 
         console.log("labelPayload---->", labelPayload);
 
-        const labelResponse = await fetch("http://127.0.0.1:8000/generate-label", {
+        const labelResponse = await fetch("https://monday-single-order-processing-k845.onrender.com/generate-label", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
