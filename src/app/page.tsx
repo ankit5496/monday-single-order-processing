@@ -313,8 +313,8 @@ export default function OrderDetail() {
           },
           body: JSON.stringify(manifestPayload),
         });
-        const manifest = await manifestResponse.json();
-        console.log("manifest--->", manifest);
+        const manifest_data = await manifestResponse.json();
+        console.log("manifest_data--->", manifest_data);
         // if (!manifestResponse.ok) {
         //   throw new Error(`Manifest generation failed: ${manifestResponse.status}`);
         // }
