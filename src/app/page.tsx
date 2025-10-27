@@ -214,7 +214,7 @@ export default function OrderDetail() {
       console.log("couriers--->", couriers);
 
       const sortedCouriers = await fetch(
-        "http://127.0.0.1:8000/sort_couriers",
+        "https://monday-single-order-processing-k845.onrender.com/sort_couriers",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
