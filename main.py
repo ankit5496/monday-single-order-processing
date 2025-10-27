@@ -44,6 +44,23 @@ def get_couriers():
         return jsonify({"couriers": couriers})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/sort_couriers', methods=['POST'])
+def sort_couriers():
+    print("=== ROUTE FUNCTION CALLED ===", flush=True)
+
+    try:
+        data = request.get_json()
+        couriers = data.get("couriers", [])
+
+        if not couriers:
+            return jsonify({"success": False, "error": "No couriers provided"}), 400
+
+        sorted_couriers = sort_couriers_direct(couriers)
+        return jsonify({"success": True, "couriers": sorted_couriers})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
     
 
 @app.route("/generate-manifest", methods=["POST"])
