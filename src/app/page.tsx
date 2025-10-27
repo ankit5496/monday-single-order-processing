@@ -313,9 +313,11 @@ export default function OrderDetail() {
           },
           body: JSON.stringify(manifestPayload),
         });
-        if (!manifestResponse.ok) {
-          throw new Error(`Manifest generation failed: ${manifestResponse.status}`);
-        }
+        const manifest = await manifestResponse.json();
+        console.log("manifest--->", manifest);
+        // if (!manifestResponse.ok) {
+        //   throw new Error(`Manifest generation failed: ${manifestResponse.status}`);
+        // }
 
         // Label payload
         const labelPayload = {
