@@ -9,6 +9,7 @@ import { CheckCircle, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirmDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+
 type Order = {
   id: string;
   name: string;
@@ -29,6 +30,9 @@ type Supplier = {
   rate: string | null;
   weight: string;
   rating: string;
+  rankText?: string;
+  color?: string;
+  backgroundColor?: string;
 };
 
 type Courier = {
@@ -37,6 +41,7 @@ type Courier = {
   estimated_delivery_days: number;
   rating: number;
   freight_charge: number;
+  rankText:string;
 };
 
 type LineItem = {
@@ -78,20 +83,42 @@ type GroupedManifests = {
   items: LineItem[];
 };
 
+interface CourierCompany {
+  courier_company_id: string;
+  courier_name: string;
+  estimated_delivery_days: number;
+  rating: number;
+  freight_charge: number;
+}
+
+
+
+
 export default function OrderDetail() {
   const [order, setOrder] = useState<Order | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
   const [customer_info, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [itemId, setItemId] = useState<number | null>(null);
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false); 
 
   const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
   console.log('apiBaseUrl--->',apiBaseUrl);
+
+  const rankLabels = ["🏆 BEST", "🥈 2ND BEST", "🥉 3RD BEST"];
+      const colors = [
+        "#28a745", // green
+        "#007bff", // blue
+        "#fd7e14", // orange
+        "#6f42c1", // purple
+        "#e83e8c", // pink
+        "#20c997", // teal
+      ];
+
 
   const monday = mondaySdk();
 
@@ -120,6 +147,32 @@ export default function OrderDetail() {
   //   fetchOrderWithLineItems(itemId);
   // }, []);
 
+  useEffect(() => {
+  if (!lineItems || lineItems.length === 0) return;
+
+  // Skip re-ranking if already ranked
+  const alreadyRanked = lineItems.some(
+    (li) => li.suppliers?.some((s) => s.rankText)
+  );
+  if (alreadyRanked) return; // ✅ Prevent infinite loop
+
+  console.log("Ranking suppliers...");
+
+  const ranked = lineItems.map((li) => {
+    if (!li.suppliers || li.suppliers.length === 0) return li;
+
+    const rankedSuppliers = li.suppliers.map((s, index) => ({
+      ...s,
+      rankText: index < 3 ? rankLabels[index] : `${index + 1}TH BEST`,
+      color: colors[index] || "#6c757d",
+    }));
+
+    return { ...li, suppliers: rankedSuppliers };
+  });
+
+  setLineItems(ranked);
+}, [lineItems]);
+
   const totalQuantity: number = lineItems.reduce(
     (sum, item) => sum + Number(item.quantity),
     0
@@ -136,9 +189,8 @@ export default function OrderDetail() {
       //   "http://127.0.0.1:8000/order",
       //   { params: { itemId } }
       // );
-      console.log('items id ----->',itemId);
       const res = await fetch(`https://monday-single-order-processing-k845.onrender.com/order?itemId=${itemId}`);
-      if (!res.ok) throw new Error(`Error:-------> ${res.status}`);
+      if (!res.ok) throw new Error(`Error:----- ${res.status}`);
       const data: ApiResponse = await res.json();
 
       console.log('orderDetails--->',data);
@@ -147,7 +199,7 @@ export default function OrderDetail() {
       setCustomerData(data.customer);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError("Failed to load order.");
+      // setError("Failed to load order.");
     } finally {
       setLoading(false);
     }
@@ -173,7 +225,6 @@ export default function OrderDetail() {
 
       return;
     }
-
     setDialogOpen(true);
   };
 
@@ -203,14 +254,16 @@ export default function OrderDetail() {
       const data = await res.json();
       console.log("courer_data--->", data);
 
-      const couriers =
-        data.couriers?.data?.available_courier_companies?.map((c: any) => ({
-          courier_id: c.courier_company_id,
-          courier_name: c.courier_name,
-          estimated_delivery_days: c.estimated_delivery_days,
-          rating: c.rating,
-          freight_charge: c.freight_charge,
-        })) || [];
+        const couriers =
+        data.couriers?.data?.available_courier_companies?.map(
+          (c: CourierCompany) => ({
+            courier_id: c.courier_company_id,
+            courier_name: c.courier_name,
+            estimated_delivery_days: c.estimated_delivery_days,
+            rating: c.rating,
+            freight_charge: c.freight_charge,
+          })
+        ) || [];
 
       console.log("couriers--->", couriers);
 
@@ -225,9 +278,31 @@ export default function OrderDetail() {
       const sortdata = await sortedCouriers.json();
       console.log("sortdata--->", sortdata);
 
+      
+      const sortCouriers = sortdata.couriers;
+      console.log('sortCouriers',sortCouriers);
+
+      const rankedCouriers = sortCouriers.map(
+        (courier: Courier, index: number) => {
+          const rankText = index < 3 ? rankLabels[index] : `${index + 1}TH BEST`;
+          return {
+            ...courier,
+            rankText,
+            color: colors[index] || "#6c757d",
+            backgroundColor:
+              index === 0
+                ? "#f8fff8"
+                : index === 1
+                ? "#f0f8ff"
+                : index === 2
+                ? "#fff8f0"
+                : "transparent",
+          };
+        }
+      );
       setLineItems((prev) =>
         prev.map((li) =>
-          li.id === itemId ? { ...li, availableCouriers: couriers } : li
+          li.id === itemId ? { ...li, availableCouriers: rankedCouriers } : li
         )
       );
     } catch (err) {
@@ -314,11 +389,9 @@ export default function OrderDetail() {
           },
           body: JSON.stringify(manifestPayload),
         });
-        const manifest_data = await manifestResponse.json();
-        console.log("manifest_data--->", manifest_data);
-        // if (!manifestResponse.ok) {
-        //   throw new Error(`Manifest generation failed: ${manifestResponse.status}`);
-        // }
+        if (!manifestResponse.ok) {
+          throw new Error(`Manifest generation failed: ${manifestResponse.status}`);
+        }
 
         // Label payload
         const labelPayload = {
@@ -379,6 +452,8 @@ export default function OrderDetail() {
   const allGenerated = lineItems.every(
     (item) => item.status === "Manifest Generated"
   );
+
+  
 
   return (
     <div className="relative">
@@ -524,7 +599,7 @@ export default function OrderDetail() {
                                 )
                               }
                               options={item.suppliers}
-                              getOptionLabel={(option) => option.supplier_name}
+                              getOptionLabel={(option) => `${option.supplier_name} — ${option.rankText || ''}`}
                               getOptionValue={(option) => option.supplier_id}
                               placeholder={
                                 item.suppliers.length
@@ -565,7 +640,7 @@ export default function OrderDetail() {
                                 )
                               }
                               options={item.availableCouriers || []}
-                              getOptionLabel={(option) => option.courier_name}
+                              getOptionLabel={(option) => `${option.courier_name} — ${option.rankText}`}
                               getOptionValue={(option) => option.courier_id}
                               placeholder={
                                 item.availableCouriers?.length
