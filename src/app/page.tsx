@@ -458,7 +458,7 @@ export default function OrderDetail() {
   return (
     <div className="relative">
       <div>
-        <Toaster position="top-right" reverseOrder={true} />\
+        <Toaster position="top-right" reverseOrder={true} />
       </div>
 
       {/* Loading overlay */}
