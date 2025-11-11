@@ -1,8 +1,12 @@
 
 import requests
-MONDAY_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjUyMjU5NjU2OSwiYWFpIjoxMSwidWlkIjo3Njc0NjQ1OSwiaWFkIjoiMjAyNS0wNi0wNVQxNTowNzowNC40MDFaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6Mjk2NTAyMjEsInJnbiI6ImFwc2UyIn0.TY4oQYraqw6fuq6I10A5Ga5JMn3LGoZv8qIQawbQlDY"
+from dotenv import load_dotenv
+import os
 
-MONDAY_API_URL = "https://api.monday.com/v2"
+load_dotenv()
+
+MONDAY_API_KEY = os.getenv("MONDAY_API_KEY")
+MONDAY_API_URL = os.getenv("MONDAY_API_URL")
 
 
 def fetch_item_with_columns(item_id):
