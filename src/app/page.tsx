@@ -154,7 +154,7 @@ export default function OrderDetail() {
   const alreadyRanked = lineItems.some(
     (li) => li.suppliers?.some((s) => s.rankText)
   );
-  if (alreadyRanked) return; // ✅ Prevent infinite loop
+  if (alreadyRanked) return; 
 
   console.log("Ranking suppliers...");
 
@@ -458,7 +458,7 @@ export default function OrderDetail() {
   return (
     <div className="relative">
       <div>
-        <Toaster position="top-right" reverseOrder={true} />
+        <Toaster position="top-right" reverseOrder={true} />\
       </div>
 
       {/* Loading overlay */}
@@ -491,8 +491,8 @@ export default function OrderDetail() {
       {!loading && (
         <div className="p-6 grid gap-6 max-w-6xl mx-auto">
           {order && (
-            <Card className="shadow-lg rounded-2xl border border-gray-200">
-              <CardHeader>
+            <Card className="shadow-lg rounded-2xl border-2 border-gray-300">
+              <CardHeader className="border-b-2 border-gray-200">
                 <CardTitle className="text-xl font-bold flex justify-between items-center">
                   Order #{order.name}
                   <span className="text-sm font-medium text-gray-600">
@@ -500,184 +500,194 @@ export default function OrderDetail() {
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-y-1 text-sm">
-                <p>
-                  <b>Date:</b> {order.date}
+              <CardContent className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm pt-4">
+                <p className="flex gap-2">
+                  <span className="font-semibold text-gray-700">Date:</span>
+                  <span className="text-gray-800">{order.date}</span>
                 </p>
-                <p>
-                  <b>Total Order Value:</b> ${order.totalPrice}
+                <p className="flex gap-2">
+                  <span className="font-semibold text-gray-700">Total Order Value:</span>
+                  <span className="text-gray-800 font-medium">${order.totalPrice}</span>
                 </p>
-                <p>
-                  <b>Description:</b> {order.description}
+                <p className="flex gap-2">
+                  <span className="font-semibold text-gray-700">Description:</span>
+                  <span className="text-gray-800">{order.description}</span>
                 </p>
-                <p>
-                  <b>Customer Postal Code:</b> {order.customerPostalCode}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Customer Info  */}
-          {customer_info && (
-            <Card className="shadow-lg rounded-2xl border border-gray-200">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">
-                  Customer Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-1 text-sm">
-                <p>
-                  <b>Name:</b> {customer_info.name}
-                </p>
-                <p>
-                  <b>Email:</b>{" "}
-                  <a
-                    href={`mailto:${customer_info.email}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {customer_info.email}
-                  </a>
-                </p>
-                <p>
-                  <b>Phone:</b> {customer_info.phone}
-                </p>
-                <p>
-                  <b>Address:</b> {customer_info.address}
+                <p className="flex gap-2">
+                  <span className="font-semibold text-gray-700">Customer Postal Code:</span>
+                  <span className="text-gray-800">{order.customerPostalCode}</span>
                 </p>
               </CardContent>
             </Card>
           )}
 
-          {/* Product Table  */}
+    {/* Customer Info  */}
+    {customer_info && (
+      <Card className="shadow-lg rounded-2xl border-2 border-gray-300">
+        <CardHeader className="border-b-2 border-gray-200">
+          <CardTitle className="text-lg font-semibold">
+            Customer Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2 text-sm pt-4">
+          <p className="flex gap-2">
+            <span className="font-semibold text-gray-700">Name:</span>
+            <span className="text-gray-800">{customer_info.name}</span>
+          </p>
+          <p className="flex gap-2">
+            <span className="font-semibold text-gray-700">Email:</span>
+            <a
+              href={`mailto:${customer_info.email}`}
+              className="text-blue-600 hover:underline"
+            >
+              {customer_info.email}
+            </a>
+          </p>
+          <p className="flex gap-2">
+            <span className="font-semibold text-gray-700">Phone:</span>
+            <span className="text-gray-800">{customer_info.phone}</span>
+          </p>
+          <p className="flex gap-2">
+            <span className="font-semibold text-gray-700">Address:</span>
+            <span className="text-gray-800">{customer_info.address}</span>
+          </p>
+        </CardContent>
+      </Card>
+    )}
+
+         {/* Product Table  */}
           {lineItems.length > 0 && (
-            <Card className="shadow-lg rounded-2xl border border-gray-200">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">
+            <Card className="shadow-lg rounded-2xl border-2 border-gray-300">
+              <CardHeader className="border-b-2 border-gray-200">
+                <CardTitle className="text-xl font-semibold">
                   Products
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left py-2 px-3">Product</th>
-                      <th className="px-3">SKU</th>
-                      <th className="px-3">Qty</th>
-                      <th className="px-3">Unit Price</th>
-                      <th className="px-3">Supplier</th>
-                      <th className="px-3">Courier</th>
-                      <th className="px-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lineItems.map((item) => (
-                      <tr key={item.id} className="border-t hover:bg-gray-50">
-                        <td className="py-2 px-3">{item.product}</td>
-                        <td className="px-3">{item.sku}</td>
-                        <td className="px-3">{item.quantity}</td>
-                        <td className="px-3">${item.unitPrice}</td>
-                        <td className="px-3">
-                          {item.status === "Manifest Generated" ? (
-                            <span className="text-gray-700">
-                              {item.suppliers.find(
-                                (s) => s.supplier_id === item.supplierId
-                              )?.supplier_name ||
-                                item.supplierName ||
-                                "—"}
-                            </span>
-                          ) : (
-                            <Select
-                              value={
-                                item.suppliers.find(
-                                  (s) => s.supplier_id === item.supplierId
-                                ) || null
-                              }
-                              onChange={(option) =>
-                                handleSupplierChange(
-                                  item.id,
-                                  option?.supplier_id || ""
-                                )
-                              }
-                              options={item.suppliers}
-                              getOptionLabel={(option) => `${option.supplier_name} — ${option.rankText || ''}`}
-                              getOptionValue={(option) => option.supplier_id}
-                              placeholder={
-                                item.suppliers.length
-                                  ? "Select supplier"
-                                  : "No suppliers available"
-                              }
-                              isSearchable
-                              menuPortalTarget={document.body}
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                              }}
-                            />
-                          )}
-                        </td>
-
-                        <td className="px-3">
-                          {item.status === "Manifest Generated" ? (
-                            <span className="text-gray-700">
-                              {item.courierName || "—"}
-                            </span>
-                          ) : (
-                            <Select
-                              value={
-                                item.availableCouriers?.find(
-                                  (c) =>
-                                    String(c.courier_id) ===
-                                      String(item.courierId) ||
-                                    c.courier_name === item.courierName
-                                ) || null
-                              }
-                              onChange={(option) =>
-                                handleCourierChange(
-                                  item.id,
-                                  option?.courier_id || ""
-                                )
-                              }
-                              options={item.availableCouriers || []}
-                              getOptionLabel={(option) => `${option.courier_name} — ${option.rankText}`}
-                              getOptionValue={(option) => option.courier_id}
-                              placeholder={
-                                item.availableCouriers?.length
-                                  ? "Select courier"
-                                  : "No couriers available"
-                              }
-                              isSearchable
-                              menuPortalTarget={document.body}
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                              }}
-                            />
-                          )}
-                        </td>
-                        <td className="px-3">
-                          <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
-                            {item.status}
-                          </span>
-                        </td>
+              <CardContent className="p-6">
+                <div className="overflow-x-auto border-2 border-gray-300 rounded-lg">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-100 border-b-2 border-gray-300">
+                      <tr>
+                        <th className="text-left py-3 px-4 font-semibold border-r border-gray-300">Product</th>
+                        <th className="text-center py-3 px-4 font-semibold border-r border-gray-300">SKU</th>
+                        <th className="text-center py-3 px-4 font-semibold border-r border-gray-300">Qty</th>
+                        <th className="text-center py-3 px-4 font-semibold border-r border-gray-300">Unit Price</th>
+                        <th className="text-center py-3 px-4 font-semibold border-r border-gray-300">Supplier</th>
+                        <th className="text-center py-3 px-4 font-semibold border-r border-gray-300">Courier</th>
+                        <th className="text-center py-3 px-4 font-semibold">Status</th>
                       </tr>
-                    ))}
-                    <tr className="border-t bg-gray-100 font-semibold">
-                      <td className="py-2 px-3 text-right" colSpan={2}>
-                        Totals:
-                      </td>
-                      <td className="px-3">{totalQuantity}</td>
-                      <td className="px-3">${totalAmount}</td>
-                      <td colSpan={3}></td>
-                    </tr>
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {lineItems.map((item, index) => (
+                        <tr key={item.id} className={`${index !== lineItems.length - 1 ? 'border-b border-gray-200' : ''} hover:bg-gray-50`}>
+                          <td className="py-3 px-4 border-r border-gray-200">{item.product}</td>
+                          <td className="py-3 px-4 text-center border-r border-gray-200">{item.sku}</td>
+                          <td className="py-3 px-4 text-center border-r border-gray-200">{item.quantity}</td>
+                          <td className="py-3 px-4 text-center border-r border-gray-200">${item.unitPrice}</td>
+                          <td className="py-3 px-4 border-r border-gray-200">
+                            {item.status === "Manifest Generated" ? (
+                              <span className="text-gray-700 block text-center">
+                                {item.suppliers.find(
+                                  (s) => s.supplier_id === item.supplierId
+                                )?.supplier_name ||
+                                  item.supplierName ||
+                                  "—"}
+                              </span>
+                            ) : (
+                              <Select
+                                value={
+                                  item.suppliers.find(
+                                    (s) => s.supplier_id === item.supplierId
+                                  ) || null
+                                }
+                                onChange={(option) =>
+                                  handleSupplierChange(
+                                    item.id,
+                                    option?.supplier_id || ""
+                                  )
+                                }
+                                options={item.suppliers}
+                                getOptionLabel={(option) => `${option.supplier_name} — ${option.rankText || ''}`}
+                                getOptionValue={(option) => option.supplier_id}
+                                placeholder={
+                                  item.suppliers.length
+                                    ? "Select supplier"
+                                    : "No suppliers available"
+                                }
+                                isSearchable
+                                menuPortalTarget={document.body}
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
+                                }}
+                              />
+                            )}
+                          </td>
+
+                          <td className="py-3 px-4 border-r border-gray-200">
+                            {item.status === "Manifest Generated" ? (
+                              <span className="text-gray-700 block text-center">
+                                {item.courierName || "—"}
+                              </span>
+                            ) : (
+                              <Select
+                                value={
+                                  item.availableCouriers?.find(
+                                    (c) =>
+                                      String(c.courier_id) ===
+                                        String(item.courierId) ||
+                                      c.courier_name === item.courierName
+                                  ) || null
+                                }
+                                onChange={(option) =>
+                                  handleCourierChange(
+                                    item.id,
+                                    option?.courier_id || ""
+                                  )
+                                }
+                                options={item.availableCouriers || []}
+                                getOptionLabel={(option) => `${option.courier_name} — ${option.rankText}`}
+                                getOptionValue={(option) => option.courier_id}
+                                placeholder={
+                                  item.availableCouriers?.length
+                                    ? "Select courier"
+                                    : "No couriers available"
+                                }
+                                isSearchable
+                                menuPortalTarget={document.body}
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
+                                }}
+                              />
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="text-green-600 font-medium text-xs">
+                              {item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-gray-300 bg-gray-100 font-semibold">
+                        <td className="py-3 px-4 text-right border-r border-gray-300" colSpan={2}>
+                          Totals:
+                        </td>
+                        <td className="py-3 px-4 text-center border-r border-gray-300">{totalQuantity}</td>
+                        <td className="py-3 px-4 text-center border-r border-gray-300">${totalAmount}</td>
+                        <td colSpan={3}></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           )}
+
 
           {/* Generate Manifest & Label Button  */}
           {!loading && (
@@ -714,3 +724,4 @@ export default function OrderDetail() {
     </div>
   );
 }
+
