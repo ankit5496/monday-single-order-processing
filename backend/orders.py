@@ -5,7 +5,6 @@ import datetime
 import pytz
 import requests
 import tempfile
-import os
 from types import SimpleNamespace
 from PyPDF2 import PdfMerger
 from datetime import datetime
@@ -15,19 +14,15 @@ from jinja2 import Environment, FileSystemLoader
 from backend.monday_utils.items import fetch_item_with_columns
 from backend.monday_utils.items import sort_suppliers_direct
 
-MONDAY_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjUyMjU5NjU2OSwiYWFpIjoxMSwidWlkIjo3Njc0NjQ1OSwiaWFkIjoiMjAyNS0wNi0wNVQxNTowNzowNC40MDFaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6Mjk2NTAyMjEsInJnbiI6ImFwc2UyIn0.TY4oQYraqw6fuq6I10A5Ga5JMn3LGoZv8qIQawbQlDY"
-ORDERS_BOARD_ID = 2023614902   
-SUPPLIER_MANIFEST_BOARD_ID = 2031231767
-ORDER_LINE_ITEMS_BOARD_ID = 2028904077  
-SUPPLIER_MANIFEST_BOARD_ORDER_LINE_ITEM_COLID = "board_relation_mksn5vvd"
-SUPPLIER_MANIFEST_BOARD_MANIFEST_FILE_COLID = "file_mksncam"
-SUPPLIER_MANIFEST_BOARD_LABEL_FILE_COLID = "file_mkv0thgs"
-SUPPLIER_PRODUCT_BOARD_ID = 2026788711  
+load_dotenv()
+
+MONDAY_API_KEY = os.getenv("MONDAY_API_KEY")
+MONDAY_API_URL = os.getenv("MONDAY_API_URL")
+ORDER_LINE_ITEMS_BOARD_ID = os.getenv("ORDER_LINE_ITEMS_BOARD_ID")
+SUPPLIER_MANIFEST_BOARD_MANIFEST_FILE_COLID = os.getenv("SUPPLIER_MANIFEST_BOARD_MANIFEST_FILE_COLID")
+SUPPLIER_MANIFEST_BOARD_LABEL_FILE_COLID = os.getenv("SUPPLIER_MANIFEST_BOARD_LABEL_FILE_COLID")
+SUPPLIER_PRODUCT_BOARD_ID = os.getenv("SUPPLIER_PRODUCT_BOARD_ID")
 supplier_manifest_monday_record_id = 0
-MONDAY_API_URL = "https://api.monday.com/v2"
-
-
-
 
 
 def get_order_with_lineitems(order_id):
