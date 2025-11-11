@@ -1,12 +1,16 @@
-from flask import Flask, request, jsonify, render_template
 import os
-from backend.orders import get_order_with_lineitems
 from flask_cors import CORS
+from flask import Flask, request, jsonify, render_template
+from backend.orders import get_order_with_lineitems
 from backend.orders import generate_manifest
 from backend.orders import generate_label
 from backend.orders import check_courier_serviceability
 from backend.monday_utils.items import sort_couriers_direct
-MONDAY_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjUyMjU5NjU2OSwiYWFpIjoxMSwidWlkIjo3Njc0NjQ1OSwiaWFkIjoiMjAyNS0wNi0wNVQxNTowNzowNC40MDFaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6Mjk2NTAyMjEsInJnbiI6ImFwc2UyIn0.TY4oQYraqw6fuq6I10A5Ga5JMn3LGoZv8qIQawbQlDY"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# MONDAY_API_KEY = os.getenv("MONDAY_API_KEY")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
