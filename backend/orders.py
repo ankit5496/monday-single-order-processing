@@ -13,6 +13,7 @@ from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from backend.monday_utils.items import fetch_item_with_columns
 from backend.monday_utils.items import sort_suppliers_direct
+from dotenv import load_dotenv
 
 load_dotenv()
 
