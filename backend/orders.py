@@ -845,7 +845,7 @@ def create_supplier_manifest_record(orders, supplier_name, supplier_item_id, cou
     orderNo_column_id = get_column_id(SUPPLIER_MANIFEST_BOARD_ID, "Orders")
     supplier_column_id = get_column_id(SUPPLIER_MANIFEST_BOARD_ID, "Suppliers")
 
-    print("orderNocolId", orderNocolId)
+    print("orderNo_column_id", orderNo_column_id)
     print("supplier_column_id", supplier_column_id)
 
     # current_time = datetime.now().strftime("%B %d, %Y %I:%M %p")
