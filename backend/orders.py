@@ -12,7 +12,7 @@ from weasyprint import HTML
 from datetime import datetime
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
-from monday_utils.items import get_column_id
+from backend.monday_utils.items import get_column_id
 from backend.monday_utils.items import fetch_item_with_columns
 from backend.monday_utils.items import sort_suppliers_direct
 
