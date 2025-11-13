@@ -636,7 +636,7 @@ def generate_manifest(order_line_items, supplierId, supplierName, supplierAddres
 
 
 def update_order_line_item(item_id, status, supplier_id, supplier_name, courier_id, courier_name, board_id):
-    print('enter in this update order line item',Flush=True)
+    print('enter in this update order line item',flush=True)
     print('item_id', item_id)
     print('status', status)
     print('supplier_id', supplier_id)
