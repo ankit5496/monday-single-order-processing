@@ -1,12 +1,14 @@
 
+import os
 import requests
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
 MONDAY_API_KEY = os.getenv("MONDAY_API_KEY")
 MONDAY_API_URL = os.getenv("MONDAY_API_URL")
+SUPPLIER_SORTING_ITEM_ID = os.getenv("SUPPLIER_SORTING_ITEM_ID")
+COURIER_SORTING_ITEM_ID = os.getenv("COURIER_SORTING_ITEM_ID")
 
 
 def fetch_item_with_columns(item_id):
@@ -87,7 +89,6 @@ def sort_suppliers_direct(suppliers):
                       (weights["supplier_rating"] * normalized_rating)
         
 
-
         scored_suppliers.append({**supplier, 'final_score': final_score})
     print('scored_suppliers_4545-->',scored_suppliers)
 
@@ -155,9 +156,7 @@ def sort_couriers_direct(couriers):
 # Fetch weightage values from Monday.com items
 def get_weightage_values():
     try:
-        SUPPLIER_SORTING_ITEM_ID = "5008187177"
-        COURIER_SORTING_ITEM_ID = "5008187272"
-        
+              
         item_ids_list = [SUPPLIER_SORTING_ITEM_ID, COURIER_SORTING_ITEM_ID]
         print('item_ids_list--->',item_ids_list)
         
@@ -259,3 +258,52 @@ def get_value(title,item):
         if col["column"]["title"] == title:
             return col.get("text") or col.get("value") or col.get("display_value")
     return None
+
+
+def get_column_id(board_id, column_title):
+  
+    # Fetch the column ID dynamically from a board in Monday.com by column title.
+   
+    print("Board_id---->",board_id)
+    
+    query = """
+    query ($boardId: [ID!]) {
+        boards (ids: $boardId) {
+            id
+            name
+            columns {
+                id
+                title
+                type
+            }
+        }
+    }
+    """
+    
+    variables = {"boardId": board_id}
+    
+    headers = {
+        "Authorization": MONDAY_API_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(
+        MONDAY_API_URL,
+        json={"query": query, "variables": variables},
+        headers=headers
+    )
+    
+    data = response.json()
+    
+    if "errors" in data:
+        raise Exception(f"GraphQL Error: {data['errors']}")
+    
+    columns = data["data"]["boards"][0]["columns"]
+    print("columns--->", columns)
+    
+    for col in columns:
+        if col["title"] == column_title:
+            return col["id"]
+    
+    return None
+
