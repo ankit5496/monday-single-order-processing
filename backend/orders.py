@@ -10,16 +10,18 @@ from PyPDF2 import PdfMerger
 from datetime import datetime
 from weasyprint import HTML
 from datetime import datetime
+from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
+from monday_utils.items import get_column_id
 from backend.monday_utils.items import fetch_item_with_columns
 from backend.monday_utils.items import sort_suppliers_direct
-from dotenv import load_dotenv
 
 load_dotenv()
 
 MONDAY_API_KEY = os.getenv("MONDAY_API_KEY")
 MONDAY_API_URL = os.getenv("MONDAY_API_URL")
 ORDER_LINE_ITEMS_BOARD_ID = os.getenv("ORDER_LINE_ITEMS_BOARD_ID")
+SUPPLIER_MANIFEST_BOARD_ID = os.getenv("SUPPLIER_MANIFEST_BOARD_ID")
 SUPPLIER_MANIFEST_BOARD_MANIFEST_FILE_COLID = os.getenv("SUPPLIER_MANIFEST_BOARD_MANIFEST_FILE_COLID")
 SUPPLIER_MANIFEST_BOARD_LABEL_FILE_COLID = os.getenv("SUPPLIER_MANIFEST_BOARD_LABEL_FILE_COLID")
 SUPPLIER_PRODUCT_BOARD_ID = os.getenv("SUPPLIER_PRODUCT_BOARD_ID")
@@ -634,7 +636,7 @@ def generate_manifest(order_line_items, supplierId, supplierName, supplierAddres
 
 
 def update_order_line_item(item_id, status, supplier_id, supplier_name, courier_id, courier_name, board_id):
-    print('enter in this update order line item')
+    print('enter in this update order line item',Flush=True)
     print('item_id', item_id)
     print('status', status)
     print('supplier_id', supplier_id)
@@ -655,16 +657,36 @@ def update_order_line_item(item_id, status, supplier_id, supplier_name, courier_
         }
     """
 
-    # Build column values as dict
-    column_values = {
-        "status": {"label": status},
-        "board_relation_mks3arpf": {"item_ids": [str(supplier_id)]}, 
-    }
+    #get the column id of required columns 
+    courierid_column_id = get_column_id(ORDER_LINE_ITEMS_BOARD_ID,"courierId")
+    couriername_column_id = get_column_id(ORDER_LINE_ITEMS_BOARD_ID,"courier")
+    status_column_id = get_column_id(ORDER_LINE_ITEMS_BOARD_ID,"Status")
+    supplier_column_id = get_column_id(ORDER_LINE_ITEMS_BOARD_ID,"Supplier")
 
-    if courier_id:
-        column_values["text_mkw4jp1r"] = str(courier_id)
-    if courier_name:
-        column_values["text_mkw41y6y"] = courier_name
+    if courierid_column_id is None or couriername_column_id is None or status_column_id is None or supplier_column_id is None:
+        print("One or more column IDs are not found.",flush=True)
+        
+    print("courierid_column_id",courierid_column_id,flush=True)
+    print("couriername_column_id",couriername_column_id,flush=True)
+    print("status_column_id",status_column_id,flush=True)
+    print("supplier_column_id",supplier_column_id,flush=True)
+
+    # Build column values as dict
+    column_values = {}
+
+    if status_column_id and status:
+        column_values[status_column_id] = {"label": status}
+
+    if supplier_column_id and supplier_id:
+        column_values[supplier_column_id] = {"item_ids": [str(supplier_id)]}
+
+    if courierid_column_id and courier_id:
+        column_values[courierid_column_id] = str(courier_id)
+
+    if couriername_column_id and courier_name:
+        column_values[couriername_column_id] = courier_name
+
+    print("column_values:", column_values)
 
     variables = {
         "itemId": str(item_id),
@@ -677,7 +699,7 @@ def update_order_line_item(item_id, status, supplier_id, supplier_name, courier_
         headers={"Authorization": MONDAY_API_KEY},
         json={"query": mutation, "variables": variables}
     )
-
+    print("response_update_orderlineitem",response)
     return response.json()
 
 
@@ -820,9 +842,11 @@ def create_supplier_manifest_record(orders, supplier_name, supplier_item_id, cou
     # Combine all order numbers into a comma-separated string
     order_nos = ", ".join(order.get("order_no", "") for order in orders)
 
-    board_id = 2031231767
-    column_id = "text_mktb6jtd"
-    supplier_column_id = "board_relation_mktqzxcn"
+    orderNo_column_id = get_column_id(SUPPLIER_MANIFEST_BOARD_ID, "Orders")
+    supplier_column_id = get_column_id(SUPPLIER_MANIFEST_BOARD_ID, "Suppliers")
+
+    print("orderNocolId", orderNocolId)
+    print("supplier_column_id", supplier_column_id)
 
     # current_time = datetime.now().strftime("%B %d, %Y %I:%M %p")
     current_date = datetime.now().strftime("%B %d")
@@ -831,7 +855,7 @@ def create_supplier_manifest_record(orders, supplier_name, supplier_item_id, cou
 
     # column values
     column_values = {
-        column_id: order_nos,
+        orderNo_column_id: order_nos,
         supplier_column_id: {
             "linkedPulseIds": [{"linkedPulseId": supplier_item_id}]
         }
@@ -843,7 +867,7 @@ def create_supplier_manifest_record(orders, supplier_name, supplier_item_id, cou
     mutation = f'''
     mutation {{
       create_item(
-        board_id: {board_id},
+        board_id: {SUPPLIER_MANIFEST_BOARD_ID},
         item_name: "{item_name}",
         column_values: "{column_values_str}"
       ) {{
