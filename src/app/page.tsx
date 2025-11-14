@@ -106,8 +106,8 @@ export default function OrderDetail() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false); 
 
-  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-  console.log('apiBaseUrl--->',apiBaseUrl);
+  const apiBackendUrl = process.env.NEXT_PUBLIC_API_RENDER_BACKEND_URL;
+  console.log('apiBackendUrl--->',apiBackendUrl);
 
   const rankLabels = ["🏆 BEST", "🥈 2ND BEST", "🥉 3RD BEST"];
       const colors = [
@@ -140,12 +140,6 @@ export default function OrderDetail() {
         }
       });
   }, []);
-
-  // useEffect(() => {
-  //   const itemId = 2023614909;
-  //   setItemId(itemId);
-  //   fetchOrderWithLineItems(itemId);
-  // }, []);
 
   useEffect(() => {
   if (!lineItems || lineItems.length === 0) return;
@@ -185,11 +179,7 @@ export default function OrderDetail() {
   const fetchOrderWithLineItems = async (itemId: number) => {
     try {
       setLoading(true);
-      // const getResponse = await axios.get<ApiResponse>(
-      //   "http://127.0.0.1:8000/order",
-      //   { params: { itemId } }
-      // );
-      const res = await fetch(`https://monday-single-order-processing-k845.onrender.com/order?itemId=${itemId}`);
+      const res = await fetch(`${apiBackendUrl}/order?itemId=${itemId}`);
       if (!res.ok) throw new Error(`Error:----- ${res.status}`);
       const data: ApiResponse = await res.json();
 
@@ -217,12 +207,10 @@ export default function OrderDetail() {
     console.log("hasValidItem-->", hasValidItem);
 
     if (!hasValidItem) {
-      // alert("Please select supplier and courier for at least one order line item.");
       toast.error(
         "Please select supplier and courier for at least one order line item."
       );
       console.log("has valid item");
-
       return;
     }
     setDialogOpen(true);
@@ -246,7 +234,7 @@ export default function OrderDetail() {
     };
 
     try {
-      const res = await fetch("https://monday-single-order-processing-k845.onrender.com/get-couriers", {
+      const res = await fetch(`${apiBackendUrl}/get-couriers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -267,8 +255,7 @@ export default function OrderDetail() {
 
       console.log("couriers--->", couriers);
 
-      const sortedCouriers = await fetch(
-        "https://monday-single-order-processing-k845.onrender.com/sort_couriers",
+      const sortedCouriers = await fetch(`${apiBackendUrl}/sort_couriers`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -382,7 +369,7 @@ export default function OrderDetail() {
         console.log("manifestPayload---->", manifestPayload);
 
         // Generate manifest PDF
-        const manifestResponse = await fetch("https://monday-single-order-processing-k845.onrender.com/generate-manifest", {
+        const manifestResponse = await fetch(`${apiBackendUrl}/generate-manifest`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -407,7 +394,7 @@ export default function OrderDetail() {
 
         console.log("labelPayload---->", labelPayload);
 
-        const labelResponse = await fetch("https://monday-single-order-processing-k845.onrender.com/generate-label", {
+        const labelResponse = await fetch(`${apiBackendUrl}/generate-label`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
