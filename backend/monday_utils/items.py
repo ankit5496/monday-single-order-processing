@@ -23,14 +23,25 @@ def fetch_item_with_columns(item_id):
       items(ids: {item_id}) {{
         id
         name
-        column_values {{
-          id
-          text
-          value
-          type
-          column {{
-            title
-          }}
+         column_values {{
+              column {{ title }}
+              id
+              text
+              value
+              ... on MirrorValue {{
+                  display_value
+                  text
+                  value
+              }}
+              ... on BoardRelationValue {{
+                  linked_item_ids
+                  display_value            
+              }}
+              ... on FormulaValue {{
+                  value
+                  id
+                  display_value
+              }}
         }}
       }}
     }}
@@ -50,6 +61,54 @@ def fetch_item_with_columns(item_id):
 
     return items[0]
 
+
+def get_related_items(boardId , columnId, campare_vales):
+
+    print('enter in this get_related_items',flush=True)
+    
+
+    headers = {
+        "Authorization": MONDAY_API_KEY,
+        "Content-Type": "application/json"
+    }
+
+    # compare_values_str = ",".join([f"\"{val}\"" for val in campare_vales])
+
+    lineitems_query = f"""
+            query {{
+            boards(ids: {boardId}) {{
+                items_page(query_params: {{rules: [ {{ column_id: "{columnId}", compare_value: {campare_vales} }}] , operator: or}}) {{
+                cursor
+                items {{
+                    id
+                    name
+                    column_values {{
+                      column {{ title }}
+                      id
+                      text
+                      value
+                      ... on MirrorValue {{ display_value text value }}
+                      ... on BoardRelationValue {{ linked_item_ids display_value }}
+                      ... on FormulaValue {{ value id display_value }}
+                    }}
+                }}
+                }}
+            }}
+            }}
+        """
+
+    response = requests.post(MONDAY_API_URL, headers=headers, json={"query": lineitems_query})
+    response.raise_for_status()
+    response_json = response.json()
+    print(" JSON ---->", response_json)
+
+    boards = response_json["data"]["boards"]
+    for board in boards:
+        items_page = board.get("items_page", {})
+        items = items_page.get("items", [])
+
+    print('Suppliers items-->',items)
+    return items
 
 # Direct supplier sorting using weighted formula
 def sort_suppliers_direct(suppliers):
@@ -260,10 +319,9 @@ def get_value(title,item):
     return None
 
 
+# Fetch the column ID dynamically from a board in Monday.com by column title.
 def get_column_id(board_id, column_title):
   
-    # Fetch the column ID dynamically from a board in Monday.com by column title.
-   
     print("Board_id---->",board_id)
     
     query = """
@@ -306,4 +364,3 @@ def get_column_id(board_id, column_title):
             return col["id"]
     
     return None
-
