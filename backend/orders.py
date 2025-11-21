@@ -153,7 +153,8 @@ def get_order_with_lineitems(order_id):
                 product_weight = get_value("Product Weight", item)
                 rate = get_value("Rate(Per Unit)", item)
                 rating = get_value("Supplier Market Rating", item)
-
+                selfSupplier = get_value("Self", item)
+                
                 supplier_info = {
                     "supplier_id": supplier_id[0] if supplier_id else None,
                     "supplier_name": supplier_name,
@@ -162,7 +163,8 @@ def get_order_with_lineitems(order_id):
                     "postal_code": postal_code,
                     "rate": rate,
                     "weight": product_weight,
-                    "rating": rating
+                    "rating": rating,
+                    "self":selfSupplier
                 }
 
                 for pid in product_ids:
@@ -179,7 +181,13 @@ def get_order_with_lineitems(order_id):
                     {"price": s["rate"], "rating": s["rating"], **s} for s in suppliers
                 ])
                 print('sorted_suppliers--->',sorted_suppliers)
-                product_supplier_map[pid] = sorted_suppliers
+                self_suppliers = [s for s in sorted_suppliers if s.get("self") == "v"]
+                other_suppliers = [s for s in sorted_suppliers if s.get("self") != "v"]
+
+                final_list = self_suppliers + other_suppliers
+                
+                product_supplier_map[pid] = final_list
+                print('final_sorted_Supplier_list--->',final_list)
             except Exception as e:
                 print(f"Error sorting suppliers for product {pid}: {e}")
 
